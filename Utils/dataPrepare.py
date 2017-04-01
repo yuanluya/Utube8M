@@ -1,5 +1,6 @@
 import tensorflow as tf
 import pdb
+import numpy as np
 
 class tfReader:
 	def __init__(self, sess, record_names):
@@ -30,9 +31,34 @@ class tfReader:
 			[frame_features, labels] = self.sess.run([self.frame_features, self.contexts['labels']])
 			one_data['features'] = frame_features
 			one_data['labels'] = labels[1]
- 			i += 1
- 			batch_data.append(one_data)
- 		return batch_data
+			i += 1
+			batch_data.append(one_data)
+		return batch_data
+
+	def preProcess(self, batch_data, need_better_name, num_features = 4716, feature_vec_len = 1024):
+		batch_size = len(batch_data)
+		max_len = max([d['features'].shape[0] for d in batch_data])
+		labels = None
+		if need_better_name == 'SVM':
+			labels = np.negative(np.ones((batch_size, num_features)))
+		elif need_better_name == 'lr':
+			labels = np.zeros((batch_size, num_features))
+		else:
+			print("Wrong parameter: need_better_name. Input 'SVM' or 'lr'. B-Bye.")
+			quit()
+		pad_feature = np.empty((batch_size, max_len, feature_vec_len))
+		original_len = np.zeros((0, 0))
+		i = 0
+		for data in batch_data:
+			pdb.set_trace()
+			labels[i][data['labels']] = 1
+			original_len = np.append(original_len, data['features'].shape[0])
+			tmp = np.append(data['features'], np.zeros((max_len -  data['features'].shape[0], feature_vec_len)), 0)
+			pad_feature[i] = tmp
+			i += 1
+		#1. labels (batch_size, 4716), 2.合并后的补零三维数组 (batch size,最大frame size,1024)， 3.每条video的原始长度
+		return labels, pad_feature, original_len
+
 
 def main():
 	sess = tf.Session()
@@ -40,7 +66,8 @@ def main():
 	init = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer()) 
 	sess.run(init)
 	tf.train.start_queue_runners(sess = sess)
-	data = tfr.fetch(10)
+	data = tfr.fetch(50)
+	(A, B, C) = tfr.preProcess(data, 'SM')
 	pdb.set_trace()
 
 if __name__ == '__main__':
