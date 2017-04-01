@@ -67,7 +67,10 @@ def main():
 	tf.train.start_queue_runners(sess = sess)
 	data = tfr.fetch(50)
 	(A, B, C) = tfr.preProcess(data, 'SVM')
+<<<<<<< HEAD
 	C = C.astype(int)
+=======
+>>>>>>> bf488747a21917ebf86a7c4074eae5755da27586
 	pdb.set_trace()
 
 if __name__ == '__main__':
