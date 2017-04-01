@@ -64,6 +64,8 @@ def main():
 	tfr = tfReader(sess, ['../Data/train--.tfrecord', '../Data/train-0.tfrecord'])
 
 	if train_mode:
+		# silent_train = True
+		# classifier = 'SVM' #['SVM', 'lr']
 		current_iter = 1
 		avg_loss = []
 		while current_iter < max_iter:
@@ -74,10 +76,7 @@ def main():
 				avg_loss = []
 
 
-
-
-
-			avg_loss.append(step(sess, net, input_data, cv_empty, cv_full, silent_train))
+			avg_loss.append(step(sess, net, tfr, silent_train))
 
 			current_iter += 1
 			if current_iter % snapshot_iter == 0:

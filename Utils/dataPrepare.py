@@ -50,13 +50,12 @@ class tfReader:
 		original_len = np.zeros((0, 0))
 		i = 0
 		for data in batch_data:
-			pdb.set_trace()
+			#pdb.set_trace()
 			labels[i][data['labels']] = 1
 			original_len = np.append(original_len, data['features'].shape[0])
 			tmp = np.append(data['features'], np.zeros((max_len -  data['features'].shape[0], feature_vec_len)), 0)
 			pad_feature[i] = tmp
 			i += 1
-		#1. labels (batch_size, 4716), 2.合并后的补零三维数组 (batch size,最大frame size,1024)， 3.每条video的原始长度
 		return labels, pad_feature, original_len
 
 
@@ -67,7 +66,8 @@ def main():
 	sess.run(init)
 	tf.train.start_queue_runners(sess = sess)
 	data = tfr.fetch(50)
-	(A, B, C) = tfr.preProcess(data, 'SM')
+	(A, B, C) = tfr.preProcess(data, 'SVM')
+	C = C.astype(int)
 	pdb.set_trace()
 
 if __name__ == '__main__':
