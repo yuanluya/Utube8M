@@ -1,5 +1,5 @@
 import numpy as np
-from easydict import EasyDict as edict
+#from easydict import EasyDict as edict
 
 model_init = -1
 model_save =  -1

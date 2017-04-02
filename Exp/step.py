@@ -10,13 +10,13 @@ sys.path.append('../Utils')
 from net import tcNet
 from dataPrepare import tfReader
 
-def step(sess, net, tfr, silent = True):
+def step(sess, net, tfr, silent = False):
 	data = tfr.fetch(batch_size)
 	(labels, pad_feature, original_len) = tfr.preProcess(data, classifier)
 	[loss] = sess.run([net.loss], 
 		feed_dict = {net.frame_features: pad_feature, net.labels: labels, net.batch_lengths: original_len})
 	if not silent:
-		print('\t[!]loss: %f' % (net.loss))
+		print('\t[!]loss: %f' % (loss))
 
 def main():
 	device_idx = 0
@@ -28,7 +28,7 @@ def main():
 				   [3, 4096, None],
 				   [3, 4096, 2],
 				   [3, 2048, 2]]
-	with tf.device('/cpu: %d' % device_idx): 
+	with tf.device('/gpu: %d' % device_idx): 
 		net.build(2048, cnn_kernels, 4096, 1e-4)
 	reader = tfReader(sess, ['../Data/train--.tfrecord', '../Data/train-0.tfrecord'])
 	init = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer()) 

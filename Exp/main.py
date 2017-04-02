@@ -40,7 +40,7 @@ def main():
 	sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True, 
 					  log_device_placement = False))
 
-	net = tcNet()
+	net = tcNet(sess)
 	with tf.device('/%s: %d' % (device, device_idx)): 
 		net.build(train = train_mode) #More parameter
 		
