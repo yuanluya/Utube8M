@@ -13,6 +13,7 @@ from dataPrepare import tfReader
 def step(sess, net, tfr, silent = False):
 	data = tfr.fetch(batch_size)
 	(labels, pad_feature, original_len) = tfr.preProcess(data, classifier)
+	pdb.set_trace()
 	[loss] = sess.run([net.loss], 
 		feed_dict = {net.frame_features: pad_feature, net.labels: labels, net.batch_lengths: original_len})
 	if not silent:
@@ -26,7 +27,6 @@ def main():
 	with tf.device('/cpu: %d' % device_idx): 
 		net.build(rnn_hidden_size, cnn_kernels, cls_feature_dim, learning_rate)
 	reader = tfReader(sess, ['../Data/train--.tfrecord', '../Data/train-0.tfrecord'])
-	pdb.set_trace()
 	init = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer()) 
 	sess.run(init)
 	tf.train.start_queue_runners(sess = sess)

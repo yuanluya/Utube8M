@@ -45,9 +45,10 @@ def main():
 	with tf.device('/%s: %d' % (device, device_idx)): 
 		net.build(rnn_hidden_size, cnn_kernels, cls_feature_dim, learning_rate)
 		
-	init = tf.global_variables_initializer()
+	tfr = tfReader(sess, ['../Data/train--.tfrecord', '../Data/train-0.tfrecord'])
+	init = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer()) 
 	sess.run(init)
-
+	tf.train.start_queue_runners(sess = sess)
 	# if model_init == model_save:
 	model_init = "Phase1"
 	restore_vars = []
@@ -61,8 +62,6 @@ def main():
 	# 	print('[!!!]No Model Found, Cannot Test')
 	# 	return
 
-	tfr = tfReader(sess, ['../Data/train--.tfrecord', '../Data/train-0.tfrecord'])
-
 	if train_mode:
 		# silent_train = True
 		# classifier = 'SVM' #['SVM', 'lr']
@@ -73,10 +72,7 @@ def main():
 			print('{iter %d}' % (current_iter))
 			if current_iter % 10 == 0:
 				print('[#]average seg loss is: %f' % np.mean(avg_loss))
-				avg_loss = []
-
-
-			avg_loss.append(step(sess, net, tfr, silent_train))
+			step(sess, net, tfr, silent_train)
 
 			current_iter += 1
 			if current_iter % snapshot_iter == 0:

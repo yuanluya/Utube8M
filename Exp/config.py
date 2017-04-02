@@ -8,7 +8,7 @@ learning_rate = 1e-4
 batch_size = 50
 train_mode = True
 classifier = 'SVM'
-silent_train = True
+silent_train = False
 
 max_iter = 10
 
