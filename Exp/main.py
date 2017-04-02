@@ -40,12 +40,10 @@ def main():
 	sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True, 
 					  log_device_placement = False))
 
-	pdb.set_trace()
-
 	net = tcNet()
 	with tf.device('/%s: %d' % (device, device_idx)): 
 		net.build(train = train_mode) #More parameter
-		net.loss() #learning_rate, optimizer_mode, bias
+		
 	init = tf.global_variables_initializer()
 	sess.run(init)
 
