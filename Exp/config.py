@@ -1,5 +1,5 @@
 import numpy as np
-from easydict import EasyDict as edict
+#from easydict import EasyDict as edict
 
 model_init = -1
 model_save =  -1
@@ -9,6 +9,7 @@ batch_size = 50
 train_mode = True
 classifier = 'SVM'
 silent_train = True
+<<<<<<< HEAD
 
 max_iter = 10
 
@@ -20,3 +21,5 @@ cnn_kernels = [[3, 2048, None],
 				   [3, 4096, None],
 				   [3, 4096, 2],
 				   [3, 2048, 2]]
+=======
+>>>>>>> 10d43f23088a2ed26ad88f446321d88355db3a63
