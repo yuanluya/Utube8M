@@ -2,6 +2,7 @@ import tensorflow as tf
 import os
 import sys
 import pdb
+import time
 import os.path as osp
 from config import *
 from step import *
@@ -40,24 +41,25 @@ def main():
 	sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True, 
 					  log_device_placement = False))
 
-	net = tcNet()
+	net = tcNet(sess)
 	with tf.device('/%s: %d' % (device, device_idx)): 
-		net.build(train = train_mode) #More parameter
+		net.build(rnn_hidden_size, cnn_kernels, cls_feature_dim, learning_rate)
 		
 	init = tf.global_variables_initializer()
 	sess.run(init)
 
-	if model_init == model_save:
-		restore_vars = []
-	else:
-		restore_vars = net.varlist
+	# if model_init == model_save:
+	model_init = "Phase1"
+	restore_vars = []
+	# else:
+	# 	restore_vars = net.varlist
 	if net.load(sess, '../Checkpoints', 'tcNet_%s' % model_init, restore_vars): # NAME!!
 		print('LOAD SUCESSFULLY')
-	elif train_mode:
-		print('[!!!]No Model Found, Train From Scratch')
 	else:
-		print('[!!!]No Model Found, Cannot Test')
-		return
+		print('[!!!]No Model Found, Train From Scratch')
+	# else:
+	# 	print('[!!!]No Model Found, Cannot Test')
+	# 	return
 
 	tfr = tfReader(sess, ['../Data/train--.tfrecord', '../Data/train-0.tfrecord'])
 

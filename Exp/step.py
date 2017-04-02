@@ -23,13 +23,9 @@ def main():
 	sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True, 
 					  log_device_placement = False))
 	net = tcNet(sess)
-	cnn_kernels = [[3, 2048, None],
-				   [3, 4096, 2],
-				   [3, 4096, None],
-				   [3, 4096, 2],
-				   [3, 2048, 2]]
 	with tf.device('/cpu: %d' % device_idx): 
-		net.build(2048, cnn_kernels, 4096, 1e-4)
+		net.build(rnn_hidden_size, cnn_kernels, cls_feature_dim, learning_rate)
+	pdb.set_trace()
 	reader = tfReader(sess, ['../Data/train--.tfrecord', '../Data/train-0.tfrecord'])
 	init = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer()) 
 	sess.run(init)
