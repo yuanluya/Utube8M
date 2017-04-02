@@ -35,16 +35,16 @@ class tfReader:
 			batch_data.append(one_data)
 		return batch_data
 
-	def preProcess(self, batch_data, need_better_name, num_features = 4716, feature_vec_len = 1024):
+	def preProcess(self, batch_data, classify, num_features = 4716, feature_vec_len = 1024):
 		batch_size = len(batch_data)
 		max_len = max([d['features'].shape[0] for d in batch_data])
 		labels = None
-		if need_better_name == 'SVM':
+		if classify == 'SVM':
 			labels = np.negative(np.ones((batch_size, num_features)))
-		elif need_better_name == 'lr':
+		elif classify == 'lr':
 			labels = np.zeros((batch_size, num_features))
 		else:
-			print("Wrong parameter: need_better_name. Input 'SVM' or 'lr'. B-Bye.")
+			print("Wrong parameter: classify. Input 'SVM' or 'lr'. B-Bye.")
 			quit()
 		pad_feature = np.empty((batch_size, max_len, feature_vec_len))
 		original_len = np.zeros((0, 0))
@@ -61,11 +61,11 @@ class tfReader:
 
 def main():
 	sess = tf.Session()
-	tfr = tfReader(sess, ['../Data/train--.tfrecord', '../Data/train-0.tfrecord'])
+	tfr = tfReader(sess, ['/Users/changliu/Desktop/train--.tfrecord', '/Users/changliu/Desktop/train-0.tfrecord'])
 	init = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer()) 
 	sess.run(init)
 	tf.train.start_queue_runners(sess = sess)
-	data = tfr.fetch(50)
+	data = tfr.fetch(1)
 	(A, B, C) = tfr.preProcess(data, 'SVM')
 	pdb.set_trace()
 

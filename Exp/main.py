@@ -2,6 +2,7 @@ import tensorflow as tf
 import os
 import sys
 import pdb
+import time
 import os.path as osp
 from config import *
 from step import *
@@ -40,28 +41,26 @@ def main():
 	sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True, 
 					  log_device_placement = False))
 
-	pdb.set_trace()
-
-	net = tcNet()
+	net = tcNet(sess)
 	with tf.device('/%s: %d' % (device, device_idx)): 
-		net.build(train = train_mode) #More parameter
-		net.loss() #learning_rate, optimizer_mode, bias
-	init = tf.global_variables_initializer()
+		net.build(rnn_hidden_size, cnn_kernels, cls_feature_dim, learning_rate)
+		
+	tfr = tfReader(sess, ['../Data/train--.tfrecord', '../Data/train-0.tfrecord'])
+	init = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer()) 
 	sess.run(init)
-
-	if model_init == model_save:
-		restore_vars = []
-	else:
-		restore_vars = net.varlist
+	tf.train.start_queue_runners(sess = sess)
+	# if model_init == model_save:
+	model_init = "Phase1"
+	restore_vars = []
+	# else:
+	# 	restore_vars = net.varlist
 	if net.load(sess, '../Checkpoints', 'tcNet_%s' % model_init, restore_vars): # NAME!!
 		print('LOAD SUCESSFULLY')
-	elif train_mode:
-		print('[!!!]No Model Found, Train From Scratch')
 	else:
-		print('[!!!]No Model Found, Cannot Test')
-		return
-
-	tfr = tfReader(sess, ['../Data/train--.tfrecord', '../Data/train-0.tfrecord'])
+		print('[!!!]No Model Found, Train From Scratch')
+	# else:
+	# 	print('[!!!]No Model Found, Cannot Test')
+	# 	return
 
 	if train_mode:
 		# silent_train = True
@@ -73,10 +72,7 @@ def main():
 			print('{iter %d}' % (current_iter))
 			if current_iter % 10 == 0:
 				print('[#]average seg loss is: %f' % np.mean(avg_loss))
-				avg_loss = []
-
-
-			avg_loss.append(step(sess, net, tfr, silent_train))
+			step(sess, net, tfr, silent_train)
 
 			current_iter += 1
 			if current_iter % snapshot_iter == 0:
