@@ -13,8 +13,7 @@ from dataPrepare import tfReader
 def step(sess, net, tfr, silent = False):
 	data = tfr.fetch(batch_size)
 	(labels, pad_feature, original_len) = tfr.preProcess(data, classifier)
-	pdb.set_trace()
-	[loss] = sess.run([net.loss], 
+	[loss, _] = sess.run([net.loss, net.minimize], 
 		feed_dict = {net.frame_features: pad_feature, net.labels: labels, net.batch_lengths: original_len})
 	if not silent:
 		print('\t[!]loss: %f' % (loss))
