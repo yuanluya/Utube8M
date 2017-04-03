@@ -8,10 +8,11 @@
 #PBS -l qos=flux
 #PBS -M zswen@umich.edu
 #PBS -m abe
-#PBS -l walltime=9:00:00
+#PBS -l walltime=12:00:00
 #PBS -j eo
 #PBS -V
 module load python-dev/3.5.2
 module load cuda/8.0.44
 module load cudnn/8.0-v5.1
-python /home/zswen/EECS542/Assignment2_git/Exp/main.py gpu 0
+cd /home/zswen/EECS542/final/Utube8M/Exp
+python main.py gpu 0

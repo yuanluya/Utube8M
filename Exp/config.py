@@ -1,23 +1,31 @@
 import numpy as np
-#from easydict import EasyDict as edict
+from easydict import EasyDict as edict
 
-model_init = -1
-model_save =  -1
-snapshot_iter = 200
-learning_rate = 1e-4
-batch_size = 50
-train_mode = True
-classifier = 'SVM'
-silent_train = False
+flags = edict()
+flags.data_files = ['../Data/train--.tfrecord']\
+	+ ['../Data/train-%d.tfrecord' % s for s in range(10)]
 
-max_iter = 10
+#model structures
+flags.rnn_hidden_size = 2048
+flags.cls_feature_dim = 4096
+flags.cnn_kernels = [[3, 2048, None],
+ 					 [3, 4096, 2],
+					 [3, 4096, None],
+					 [3, 4096, 2],
+					 [3, 2048, 2]]
 
+#model hyperparameters
+flags.batch_size = 32
+flags.learning_rate = 1e-3
+flags.training_phase = 'phase1'
 
-rnn_hidden_size = 2048
-cls_feature_dim = 4096
-cnn_kernels = [[3, 2048, None],
-				   [3, 4096, 2],
-				   [3, 4096, None],
-				   [3, 4096, 2],
-				   [3, 2048, 2]]
+#training options
+flags.train_mode = True
+flags.silent_train = False
+flags.silent_step = True
+flags.loss_mode = 'lr'
+flags.snapshot_iter = 500
+flags.print_iter = 20
+flags.max_iter= 3000
+flags.model_init = 'None'
 

@@ -1,15 +1,22 @@
 import tensorflow as tf
 import pdb
 import numpy as np
+import scipy.stats as scp
+import json
 
 class tfReader:
-	def __init__(self, sess, record_names):
-		
+	def __init__(self, sess, record_names, num_classifiers = 25,
+				 num_features = 4716, feature_vec_len = 1024):
+
+		self.small2big = json.load(open('../Utils/small2big.json'))
 		self.record_names = record_names
 		self.reader = tf.TFRecordReader()
 		self.sess = sess
+		self.num_classifiers = num_classifiers
+		self.num_features = num_features
+		self.feature_vec_len = feature_vec_len
 
-		filename_queue = tf.train.string_input_producer(self.record_names, num_epochs = 1)
+		filename_queue = tf.train.string_input_producer(self.record_names)
 		_, serialized_example = self.reader.read(filename_queue)
 
 		self.contexts, self.features = tf.parse_single_sequence_example(
@@ -35,33 +42,48 @@ class tfReader:
 			batch_data.append(one_data)
 		return batch_data
 
-	def preProcess(self, batch_data, classify, num_features = 4716, feature_vec_len = 1024):
+	def preProcess(self, batch_data, classify):
 		batch_size = len(batch_data)
 		max_len = max([d['features'].shape[0] for d in batch_data])
-		labels = None
+		labels_fine = None
+		labels_rough = None
 		if classify == 'SVM':
-			labels = np.negative(np.ones((batch_size, num_features)))
+			labels_fine = np.negative(np.ones((batch_size, self.num_features)))
+			labels_rough = np.negative(np.ones((batch_size, self.num_classifiers)))
 		elif classify == 'lr':
-			labels = np.zeros((batch_size, num_features))
+			labels_fine = np.zeros((batch_size, self.num_features))
+			labels_rough = np.zeros((batch_size, self.num_classifiers))
 		else:
 			print("Wrong parameter: classify. Input 'SVM' or 'lr'. B-Bye.")
 			quit()
-		pad_feature = np.empty((batch_size, max_len, feature_vec_len))
+		pad_feature = np.empty((batch_size, max_len, self.feature_vec_len))
 		original_len = np.zeros((0, 0))
+		labels_rough = self.fine2rough(batch_data)
 		i = 0
 		for data in batch_data:
 			#pdb.set_trace()
-			labels[i][data['labels']] = 1
+			labels_fine[i][data['labels']] = 1
 			original_len = np.append(original_len, data['features'].shape[0])
-			tmp = np.append(data['features'], np.zeros((max_len -  data['features'].shape[0], feature_vec_len)), 0)
+			tmp = np.append(data['features'], np.zeros((max_len -  data['features'].shape[0], self.feature_vec_len)), 0)
 			pad_feature[i] = tmp
 			i += 1
-		return labels, pad_feature, original_len
-
+		batch_data = {'labels_rough': labels_rough,
+					  'labels_fine': labels_fine,
+					  'pad_feature': pad_feature,
+					  'original_len': original_len}
+		return batch_data
+	
+	def fine2rough(self, batch_data):
+		label_rough = np.zeros([len(batch_data), self.num_classifiers]) 
+		for b, data in enumerate(batch_data):
+			temp_rough = [self.small2big[str(s)] for s in data['labels']]
+			rough_label = scp.mode(temp_rough)[0][0]
+			label_rough[b, rough_label] = 1	
+		return label_rough
 
 def main():
 	sess = tf.Session()
-	tfr = tfReader(sess, ['/Users/changliu/Desktop/train--.tfrecord', '/Users/changliu/Desktop/train-0.tfrecord'])
+	tfr = tfReader(sess, ['../Data/train--.tfrecord', '../Data/train-0.tfrecord'])
 	init = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer()) 
 	sess.run(init)
 	tf.train.start_queue_runners(sess = sess)

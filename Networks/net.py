@@ -8,7 +8,7 @@ from base import Model
 import pdb
 
 class tcNet(Model):
-	def __init__(self, sess, num_classifier, num_class = 4716):
+	def __init__(self, sess, num_classifier = 25, num_class = 4716):
 		self.sess = sess
 		self.num_class = num_class
 		self.num_classifier = num_classifier
@@ -62,7 +62,7 @@ class tcNet(Model):
 				kernel_shape = [1, k_size[0], self.rnn_hidden_size, k_size[1]]
 			else:
 				kernel_shape = [1, k_size[0], cnn_kernel_sizes[idx - 1][1], k_size[1]]
-			cnn = self.conv_layer(self.cnn_layers[-1], kernel_shape, 1e-3, 'conv%d' % idx)
+			cnn = self.conv_layer(self.cnn_layers[-1], kernel_shape, 1e-2, 'conv%d' % idx)
 			cnn_relu = tf.nn.relu(cnn)
 			if k_size[2] is not None:
 				pool_kernel_shape = [1, 1, k_size[2], 1]
@@ -72,10 +72,11 @@ class tcNet(Model):
 		#[batch_size, feature_dim]
 		self.cnn_output = tf.reduce_max(self.cnn_layers[-1], axis = [1, 2])
 		self.cls_features = self.fc_layer(self.cnn_output,
-			[self.cnn_output.get_shape().as_list()[1], self.cls_feature_dim], 1e-4, 'cls_feature')
+			[self.cnn_output.get_shape().as_list()[1], self.cls_feature_dim], 0.01, 'cls_feature')
 		self.cls_features_relu = tf.nn.relu(self.cls_features)
 		self.cls_level1 = self.fc_layer(self.cls_features_relu, 
-				[self.cls_feature_dim, self.num_classifier], 1e-4, 'cls_level1')
+				[self.cls_feature_dim, self.num_classifier], 0.01, 'cls_level1')
+		self.cls_level1_prob = tf.nn.softmax(self.cls_level1)
 		if self.phase == 'phase1':
 			self.cls_loss = tf.nn.softmax_cross_entropy_with_logits(labels = self.labels_rough, 
 																	logits = self.cls_level1)

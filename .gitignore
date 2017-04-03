@@ -3,3 +3,7 @@
 **.pyc
 **.tfrecord
 **.csv
+**.pbs
+/Checkpoints/*
+/Data/*
+/Exp/seg.pbs
