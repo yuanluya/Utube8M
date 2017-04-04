@@ -91,7 +91,7 @@ class tfReader:
 			all_rough_labels[b] = rough_label
 			label_rough[b, rough_label] = 1
 		
-		return label_rough, np.array([np.sum(all_rough_labels == l) for l in all_rough_labels])
+		return label_rough, np.array([1 / np.sum(all_rough_labels == l) for l in all_rough_labels])
 
 def main():
 	sess = tf.Session()
