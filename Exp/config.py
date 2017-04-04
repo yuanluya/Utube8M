@@ -1,9 +1,9 @@
 import numpy as np
 from easydict import EasyDict as edict
+import os
 
 flags = edict()
-flags.data_files = ['../Data/train--.tfrecord']\
-	+ ['../Data/train-%d.tfrecord' % s for s in range(10)]
+flags.data_files = ['../Data/%s' % f for f in os.listdir('../Data') if f[-8: ] == 'tfrecord']
 
 #model structures
 flags.rnn_hidden_size = 1024 
