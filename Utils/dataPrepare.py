@@ -36,14 +36,15 @@ class tfReader:
 		i = 0
 		while i < batch_size:
 			one_data = {}
-			[frame_features, labels] = self.sess.run([self.frame_features, self.contexts['labels']])
+			[frame_features, labels, v_ids] = self.sess.run([self.frame_features, self.contexts['labels'], self.contexts['video_id']])
 			one_data['features'] = frame_features
 			one_data['labels'] = labels[1]
+			one_data['ids'] = v_ids
 			i += 1
 			batch_data.append(one_data)
 		return batch_data
 
-	def preProcess(self, batch_data, classify, max_video_len  = 300):
+	def preProcess(self, batch_data, classify, max_video_len = 300):
 		batch_size = len(batch_data)
 		if self.pad_batch_max:
 			max_video_len = max([d['features'].shape[0] for d in batch_data])
@@ -60,10 +61,9 @@ class tfReader:
 			quit()
 		pad_feature = np.empty((batch_size, max_video_len, self.feature_vec_len))
 		original_len = np.zeros((0, 0))
-		labels_rough = self.fine2rough(batch_data)
+		labels_rough, labels_rough_factor = self.fine2rough(batch_data)
 		i = 0
 		for data in batch_data:
-			#pdb.set_trace()
 			labels_fine[i][data['labels']] = 1
 			original_len = np.append(original_len, data['features'].shape[0])
 			cut_length = max_video_len -  data['features'].shape[0]
@@ -73,19 +73,25 @@ class tfReader:
 			else:
 				pad_feature[i] = data['features'][:max_video_len, :]
 			i += 1
+
 		batch_data = {'labels_rough': labels_rough,
+					  'labels_rough_factor': labels_rough_factor,
 					  'labels_fine': labels_fine,
 					  'pad_feature': pad_feature,
-					  'original_len': original_len}
+					  'original_len': original_len,
+					  'video_ids': [b['ids'] for b in batch_data]}
 		return batch_data
 	
 	def fine2rough(self, batch_data):
-		label_rough = np.zeros([len(batch_data), self.num_classifiers]) 
+		label_rough = np.zeros([len(batch_data), self.num_classifiers])
+		all_rough_labels = np.zeros(len(batch_data))
 		for b, data in enumerate(batch_data):
 			temp_rough = [self.small2big[str(s)] for s in data['labels']]
 			rough_label = scp.mode(temp_rough)[0][0]
-			label_rough[b, rough_label] = 1	
-		return label_rough
+			all_rough_labels[b] = rough_label
+			label_rough[b, rough_label] = 1
+		
+		return label_rough, np.array([np.sum(all_rough_labels == l) for l in all_rough_labels])
 
 def main():
 	sess = tf.Session()

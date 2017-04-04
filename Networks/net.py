@@ -16,6 +16,8 @@ class tcNet(Model):
 		self.frame_features = tf.placeholder(tf.float32, shape = [None, 300, 1024])
 		#[batch_size, num_class]
 		self.labels_rough = tf.placeholder(tf.float32, shape = [None, self.num_classifier])
+		#[batch_size]
+		self.labels_rough_factor = tf.placeholder(tf.float32, shape = [None])
 		#[batch_size, num_class]
 		self.labels_fine = tf.placeholder(tf.float32, shape = [None, self.num_class])
 		#[batch_size]
@@ -84,8 +86,9 @@ class tcNet(Model):
 		if self.phase == 'phase1':
 			self.cls_loss = tf.nn.softmax_cross_entropy_with_logits(labels = self.labels_rough, 
 																	logits = self.cls_level1)
+			self.normalized_cls_loss = tf.multiply(self.labels_rough_factor, self.cls_loss)
 			self.wd = tf.add_n(tf.get_collection('all_weight_decay'), name = 'weight_decay_summation')
-			self.loss = tf.reduce_mean(self.cls_loss) + self.wd
+			self.loss = tf.reduce_mean(self.normalized_cls_loss) + self.wd
 			self.minimize = self.opt.minimize(self.loss)
 		elif self.phase == 'phase2' or self.phase == 'phase3':
 			self.cls_level1_prob = tf.expand_dims(tf.transpose(tf.nn.softmax(self.cls_level1)), -1)
