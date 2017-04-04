@@ -8,23 +8,6 @@ import os.path as osp
 from config import flags
 from step import *
 
-
-ROOT_DIR = osp.abspath(osp.join(osp.dirname(__file__), '..'))
-NETWORK_DIR = osp.abspath(osp.join(ROOT_DIR, 'Networks'))
-EXP_DIR = osp.abspath(osp.join(ROOT_DIR, 'Exp'))
-#SUBMISSION_DIR = osp.abspath(osp.join(ROOT_DIR, 'Submission'))
-#TRAIN_DIR = osp.abspath(osp.join(ROOT_DIR, 'TrainVal'))
-UTIL_DIR = osp.abspath(osp.join(ROOT_DIR, 'Util'))
-CHECKPOINTS_DIR = osp.abspath(osp.join(ROOT_DIR, 'Checkpoints'))
-sys.path.append(ROOT_DIR)
-sys.path.append(NETWORK_DIR)
-sys.path.append(EXP_DIR)
-#sys.path.append(SUBMISSION_DIR)
-#sys.path.append(TRAIN_DIR)
-sys.path.append(UTIL_DIR)
-sys.path.append(CHECKPOINTS_DIR)
-
-
 def main():
 	#set device
 	if len(sys.argv) != 3 or \
@@ -55,7 +38,7 @@ def main():
 	restore_vars = []
 	# else:
 	# 	restore_vars = net.varlist
-	if net.load(sess, '../Checkpoints', 'tcNet_%s' % flags.training_phase, restore_vars): # NAME!!
+	if net.load(sess, '../Checkpoints', 'tcNet_%s_%d' % (flags.training_phase, flags.init_iter), restore_vars): # NAME!!
 		print('LOAD SUCESSFULLY')
 	else:
 		print('[!!!]No Model Found, Train From Scratch')
@@ -75,11 +58,12 @@ def main():
 				print('{iter %d}' % (current_iter))
 				print('[#]average seg loss is: %f' % np.mean(avg_loss))
 				avg_loss = []
-			avg_loss.append(step(sess, net, tfr, flags.batch_size, flags.loss_mode, flags.silent_step))
+			loss = step(sess, net, tfr, flags.batch_size, flags.loss_mode, flags.silent_step)
+			avg_loss.append(loss)
 
 			current_iter += 1
 			if current_iter % flags.snapshot_iter == 0:
-				net.save(sess, '../Checkpoints', 'teNet_%s_%s' % (flags.training_phase ,str(current_iter)))
+				net.save(sess, '../Checkpoints', 'tcNet_%s_%s' % (flags.training_phase ,str(current_iter)))
 			#print('[$] iter timing: %d' % (time.clock() - t0))
 
 if __name__ == '__main__':

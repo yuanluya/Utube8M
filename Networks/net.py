@@ -13,7 +13,7 @@ class tcNet(Model):
 		self.num_class = num_class
 		self.num_classifier = num_classifier
 		#[batch_size, max_frame_size, 1024]
-		self.frame_features = tf.placeholder(tf.float32, shape = [None, None, 1024])
+		self.frame_features = tf.placeholder(tf.float32, shape = [None, 300, 1024])
 		#[batch_size, num_class]
 		self.labels_rough = tf.placeholder(tf.float32, shape = [None, self.num_classifier])
 		#[batch_size, num_class]
@@ -21,7 +21,7 @@ class tcNet(Model):
 		#[batch_size]
 		self.batch_lengths = tf.placeholder(tf.int32, shape = [None])
 	
-	#kernel_sizes: [[w, channel, pool:<strides/None>]]
+	#kernel_sizes: [[w, channel, pool:<strides/None>, std]]
 	def build(self, rnn_hidden_size, cnn_kernel_sizes, cls_feature_dim, phase,
 			  lr = 1e-4, weight_decay = 1e-4, dropout_ratio = 0.5, train = True):
 		#define model hyperparameters
@@ -41,7 +41,9 @@ class tcNet(Model):
 		#######################################################################
 
 		#define rnn
-		self.cell = tf.contrib.rnn.GRUCell(self.rnn_hidden_size)
+		'''
+		self.cell = tf.contrib.rnn.LSTMCell(self.rnn_hidden_size,
+			initializer = tf.random_normal_initializer(stddev = 5e-2))
 		self.cell_dropout = tf.contrib.rnn.DropoutWrapper(self.cell, output_keep_prob = 1 - self.dropout_ratio)
 		self.bi_features, _ = tf.nn.bidirectional_dynamic_rnn(
 			cell_fw = self.cell_dropout,
@@ -50,19 +52,20 @@ class tcNet(Model):
 			sequence_length = self.batch_lengths,
 			inputs = self.frame_features)
 		#[batch_size, max_frame_size, rnn_hidden_size]
-		self.features = self.bi_features[0] + self.bi_features[1]
-
+		#self.rnn_features = self.bi_features[0] + self.bi_features[1]
 		#[batch_size, 1, max_frame_size, rnn_hidden_size]
-		self.cnn_inputs = tf.expand_dims(self.features, 1)
-		self.cnn_layers = [self.cnn_inputs]
-		
+		'''
+		self.rnn_features = self.frame_features
+
 		#define cnn
+		self.cnn_inputs = tf.expand_dims(self.rnn_features, 1)
+		self.cnn_layers = [self.cnn_inputs]
 		for idx, k_size in enumerate(cnn_kernel_sizes):
 			if idx == 0:
 				kernel_shape = [1, k_size[0], self.rnn_hidden_size, k_size[1]]
 			else:
 				kernel_shape = [1, k_size[0], cnn_kernel_sizes[idx - 1][1], k_size[1]]
-			cnn = self.conv_layer(self.cnn_layers[-1], kernel_shape, 1e-2, 'conv%d' % idx)
+			cnn = self.conv_layer(self.cnn_layers[-1], kernel_shape, k_size[3], 'conv%d' % idx)
 			cnn_relu = tf.nn.relu(cnn)
 			if k_size[2] is not None:
 				pool_kernel_shape = [1, 1, k_size[2], 1]
@@ -70,9 +73,10 @@ class tcNet(Model):
 			self.cnn_layers.append(cnn_relu)
 		
 		#[batch_size, feature_dim]
-		self.cnn_output = tf.reduce_max(self.cnn_layers[-1], axis = [1, 2])
+		cnn_shapes = self.cnn_layers[-1].get_shape().as_list()
+		self.cnn_output = tf.reshape(self.cnn_layers[-1], [-1, cnn_shapes[1] * cnn_shapes[2] * cnn_shapes[3]])
 		self.cls_features = self.fc_layer(self.cnn_output,
-			[self.cnn_output.get_shape().as_list()[1], self.cls_feature_dim], 0.01, 'cls_feature')
+			[self.cnn_output.get_shape().as_list()[-1], self.cls_feature_dim], 0.01, 'cls_feature')
 		self.cls_features_relu = tf.nn.relu(self.cls_features)
 		self.cls_level1 = self.fc_layer(self.cls_features_relu, 
 				[self.cls_feature_dim, self.num_classifier], 0.01, 'cls_level1')

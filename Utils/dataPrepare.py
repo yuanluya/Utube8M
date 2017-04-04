@@ -6,7 +6,7 @@ import json
 
 class tfReader:
 	def __init__(self, sess, record_names, num_classifiers = 25,
-				 num_features = 4716, feature_vec_len = 1024):
+				 num_features = 4716, feature_vec_len = 1024, pad_batch_max = False):
 
 		self.small2big = json.load(open('../Utils/small2big.json'))
 		self.record_names = record_names
@@ -15,6 +15,7 @@ class tfReader:
 		self.num_classifiers = num_classifiers
 		self.num_features = num_features
 		self.feature_vec_len = feature_vec_len
+		self.pad_batch_max = pad_batch_max
 
 		filename_queue = tf.train.string_input_producer(self.record_names)
 		_, serialized_example = self.reader.read(filename_queue)
@@ -42,9 +43,10 @@ class tfReader:
 			batch_data.append(one_data)
 		return batch_data
 
-	def preProcess(self, batch_data, classify):
+	def preProcess(self, batch_data, classify, max_video_len  = 300):
 		batch_size = len(batch_data)
-		max_len = max([d['features'].shape[0] for d in batch_data])
+		if self.pad_batch_max:
+			max_video_len = max([d['features'].shape[0] for d in batch_data])
 		labels_fine = None
 		labels_rough = None
 		if classify == 'SVM':
@@ -56,7 +58,7 @@ class tfReader:
 		else:
 			print("Wrong parameter: classify. Input 'SVM' or 'lr'. B-Bye.")
 			quit()
-		pad_feature = np.empty((batch_size, max_len, self.feature_vec_len))
+		pad_feature = np.empty((batch_size, max_video_len, self.feature_vec_len))
 		original_len = np.zeros((0, 0))
 		labels_rough = self.fine2rough(batch_data)
 		i = 0
@@ -64,8 +66,12 @@ class tfReader:
 			#pdb.set_trace()
 			labels_fine[i][data['labels']] = 1
 			original_len = np.append(original_len, data['features'].shape[0])
-			tmp = np.append(data['features'], np.zeros((max_len -  data['features'].shape[0], self.feature_vec_len)), 0)
-			pad_feature[i] = tmp
+			cut_length = max_video_len -  data['features'].shape[0]
+			if cut_length>=0:
+				tmp = np.append(data['features'], np.zeros((cut_length, self.feature_vec_len)), 0)
+				pad_feature[i] = tmp
+			else:
+				pad_feature[i] = data['features'][:max_video_len, :]
 			i += 1
 		batch_data = {'labels_rough': labels_rough,
 					  'labels_fine': labels_fine,
@@ -88,7 +94,7 @@ def main():
 	sess.run(init)
 	tf.train.start_queue_runners(sess = sess)
 	data = tfr.fetch(1)
-	(A, B, C) = tfr.preProcess(data, 'SVM')
+	prepared_data = tfr.preProcess(data, 'SVM')
 	pdb.set_trace()
 
 if __name__ == '__main__':

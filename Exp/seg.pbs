@@ -8,7 +8,7 @@
 #PBS -l qos=flux
 #PBS -M zswen@umich.edu
 #PBS -m abe
-#PBS -l walltime=12:00:00
+#PBS -l walltime=5:00:00
 #PBS -j eo
 #PBS -V
 module load python-dev/3.5.2
