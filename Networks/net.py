@@ -38,10 +38,8 @@ class tcNet(Model):
 		self.train = train
 		if not self.train:
 			self.dropout_ratio = 0
-
 		#######################################################################
 		#######################################################################
-
 		#define rnn
 		self.cell = tf.contrib.rnn.LSTMCell(self.rnn_hidden_size,
 			initializer = tf.random_normal_initializer(stddev = 1e-1))
@@ -142,19 +140,3 @@ class tcNet(Model):
 			tf.add_to_collection('all_weight_decay', weight_decay)
 			bias = tf.get_variable(name = 'bias', initializer = init_b, shape = [shape[-1]])
 			return tf.nn.bias_add(tf.matmul(input, W), bias)
-	
-def main():
-	sess = tf.Session()
-	net = tcNet(sess, 34)
-	#[stride, channel, pool_stride]
-	cnn_kernels = [[3, 2048, None],
-				   [3, 4096, 2],
-				   [3, 4096, None],
-				   [3, 4096, 2],
-				   [3, 2048, 2]]
-	with tf.device('/gpu: 0'):
-		net.build(1024, cnn_kernels, 4096, 'phase1', 1e-4)
-
-
-if __name__ == '__main__':
-	main()

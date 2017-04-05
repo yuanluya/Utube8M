@@ -19,13 +19,13 @@ class Model(object):
       os.makedirs(checkpoint_dir)
     self.saver.save(sess, os.path.join(checkpoint_dir, model_name))
 
-  def load(self, sess, checkpoint_dir, dataset_name, load_var):
+  def load(self, sess, checkpoint_dir, dataset_name, not_load_var):
 	
     all_vars = tf.global_variables()
-    if len(load_var) == 0:
+    if len(not_load_var) == 0:
       restore_vars = all_vars
     else:
-      restore_vars = [var for var in all_vars if var in load_var]
+      restore_vars = [var for var in all_vars if var not in not_load_var]
     self.saver = tf.train.Saver(restore_vars)
     print(" [*] Loading checkpoints...")
     print(dataset_name)
