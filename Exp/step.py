@@ -35,11 +35,17 @@ def step(sess, net, tfr, batch_size, mode, silent_step):
 
 	if not silent_step and mode != 'test':
 		gt_labels = np.nonzero(data['labels_rough'])[1]
-		prediction = np.argmax(cls_level1, 1)
-		count = scp.mode(prediction)[1]
-		accuracy = np.sum(gt_labels == prediction) / prediction.shape[0]
-		baseline = count[0] / prediction.shape[0]
-		print('accuracy: %f, baseline: %f' % (accuracy, baseline))
+		first_argmax = np.argmax(cls_level1, 1)
+		cls_level1[np.arange(128), first_argmax] = np.nan
+		second_argmax = np.nanargmax(cls_level1, 1)
+		#pdb.set_trace()
+		count = scp.mode(first_argmax)[1]
+		top_accuracy = np.sum(gt_labels == first_argmax) / first_argmax.shape[0]
+		top2_accuracy = np.sum(np.logical_or((gt_labels == first_argmax), 
+					(gt_labels == second_argmax))) / first_argmax.shape[0]
+		baseline = count[0] / first_argmax.shape[0]
+		print('accuracy: %f', top_accuracy)
+		print('top 2 accuracy: %f, baseline: %f' % (top2_accuracy, baseline))
 	return loss
 
 if __name__ == '__main__':

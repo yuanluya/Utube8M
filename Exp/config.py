@@ -15,14 +15,14 @@ flags.cnn_kernels = [[3, 1024, None, 1e-1],
 
 #model hyperparameters
 flags.batch_size = 128
-flags.learning_rate = 1e-4
+flags.learning_rate = 5e-5
 flags.training_phase = 'phase1_lstm'
 
 #training options
 flags.mode = 'train' #<train|val|test>
-flags.init_iter = 2000
+flags.init_iter = 11000
 flags.silent_train = False
-flags.silent_step = True
+flags.silent_step = False
 flags.snapshot_iter = 500
 flags.print_iter = 5
 flags.max_iter= 5000
