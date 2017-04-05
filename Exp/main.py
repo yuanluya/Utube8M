@@ -63,7 +63,7 @@ def main():
 
 			current_iter += 1
 			if current_iter % flags.snapshot_iter == 0:
-				net.save(sess, '../Checkpoints', 'tcNet_%s_%s' % (flags.training_phase ,str(current_iter)))
+				net.save(sess, '../Checkpoints', 'tcNet_%s_%s' % (flags.training_phase ,str(flags.init_iter + current_iter)))
 			#print('[$] iter timing: %d' % (time.clock() - t0))
 
 if __name__ == '__main__':

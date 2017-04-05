@@ -25,7 +25,7 @@ class tcNet(Model):
 	
 	#kernel_sizes: [[w, channel, pool:<strides/None>, std]]
 	def build(self, rnn_hidden_size, cnn_kernel_sizes, cls_feature_dim, phase,
-			  lr = 1e-4, weight_decay = 1e-4, dropout_ratio = 0.5, train = True):
+			  lr, weight_decay = 1e-4, dropout_ratio = 0.5, train = True):
 		#define model hyperparameters
 		self.rnn_hidden_size = rnn_hidden_size
 		self.cnn_kernel_sizes = cnn_kernel_sizes
@@ -43,9 +43,8 @@ class tcNet(Model):
 		#######################################################################
 
 		#define rnn
-		'''
 		self.cell = tf.contrib.rnn.LSTMCell(self.rnn_hidden_size,
-			initializer = tf.random_normal_initializer(stddev = 5e-2))
+			initializer = tf.random_normal_initializer(stddev = 1e-1))
 		self.cell_dropout = tf.contrib.rnn.DropoutWrapper(self.cell, output_keep_prob = 1 - self.dropout_ratio)
 		self.bi_features, _ = tf.nn.bidirectional_dynamic_rnn(
 			cell_fw = self.cell_dropout,
@@ -54,12 +53,10 @@ class tcNet(Model):
 			sequence_length = self.batch_lengths,
 			inputs = self.frame_features)
 		#[batch_size, max_frame_size, rnn_hidden_size]
-		#self.rnn_features = self.bi_features[0] + self.bi_features[1]
-		#[batch_size, 1, max_frame_size, rnn_hidden_size]
-		'''
-		self.rnn_features = self.frame_features
+		self.rnn_features = self.bi_features[0] + self.bi_features[1]
 
 		#define cnn
+		#[batch_size, 1, max_frame_size, rnn_hidden_size]
 		self.cnn_inputs = tf.expand_dims(self.rnn_features, 1)
 		self.cnn_layers = [self.cnn_inputs]
 		for idx, k_size in enumerate(cnn_kernel_sizes):
@@ -83,14 +80,14 @@ class tcNet(Model):
 		self.cls_level1 = self.fc_layer(self.cls_features_relu, 
 				[self.cls_feature_dim, self.num_classifier], 0.01, 'cls_level1')
 		self.cls_level1_prob = tf.nn.softmax(self.cls_level1)
-		if self.phase == 'phase1':
-			self.cls_loss = tf.nn.softmax_cross_entropy_with_logits(labels = self.labels_rough, 
-																	logits = self.cls_level1)
-			self.normalized_cls_loss = tf.multiply(self.labels_rough_factor, self.cls_loss)
+		if self.phase[0: 6] == 'phase1':
+			self.cls_loss = tf.losses.softmax_cross_entropy(self.labels_rough,
+															self.cls_level1,
+															self.labels_rough_factor)
 			self.wd = tf.add_n(tf.get_collection('all_weight_decay'), name = 'weight_decay_summation')
-			self.loss = tf.reduce_mean(self.normalized_cls_loss) + self.wd
+			self.loss = tf.reduce_mean(self.cls_loss) + self.wd
 			self.minimize = self.opt.minimize(self.loss)
-		elif self.phase == 'phase2' or self.phase == 'phase3':
+		elif self.phase[0: 6] == 'phase2' or self.phase[0: 6] == 'phase3':
 			self.cls_level1_prob = tf.expand_dims(tf.transpose(tf.nn.softmax(self.cls_level1)), -1)
 			self.classifiers = tf.Variable(tf.random_normal(
 				[self.num_classifier, self.cls_feature_dim, self.num_class]), 
