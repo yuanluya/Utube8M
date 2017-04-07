@@ -102,7 +102,7 @@ class tcNet(Model):
 			self.minimize = self.opt.minimize(self.loss)
 			self.optimize_varlist = list(set(tf.global_variables()) - set(self.varlist))
 		elif self.phase[0: 6] == 'phase2' or self.phase[0: 6] == 'phase3':
-			self.cls_level1_prob = tf.expand_dims(tf.transpose(self.cls_level1_prob, -1)
+			self.cls_level1_prob = tf.expand_dims(tf.transpose(self.cls_level1_prob, -1))
 			self.classifiers = tf.Variable(tf.random_normal(
 				[self.num_classifier, self.cls_feature_dim, self.num_class]), 
 				stddev = 1e-3, name = 'fine_classifiers')
