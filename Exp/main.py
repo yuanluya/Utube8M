@@ -24,14 +24,17 @@ def main():
 	with tf.device('/%s: %d' % (device, device_idx)): 
 		net.build(flags.rnn_hidden_size, flags.cnn_kernels,
 				  flags.cls_feature_dim, flags.training_phase, 
-				  flags.learning_rate, train = (flags.mode == 'train'))
+				  flags.learning_rate, flags.weight_decay, train = (flags.mode == 'train'))
 		
 	tfr = tfReader(sess, flags.data_dir, flags.mode)
 	init = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer()) 
 	sess.run(init)
 	tf.train.start_queue_runners(sess = sess)
 	
-	restore_vars = []
+	if flags.restore_mode == 'all':
+		restore_vars = []
+	elif flags.restore_mode == 'old':
+		restore_vars = list(set(net.varlist) - set(net.new_varlist)) 
 	if net.load(sess, '../Checkpoints', 'tcNet_%s_%d' % (flags.training_phase, flags.init_iter), restore_vars):
 		print('LOAD SUCESSFULLY')
 	elif flags.mode == 'train':

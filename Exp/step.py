@@ -14,7 +14,8 @@ def step(sess, net, tfr, batch_size, mode, silent_step):
 	data = tfr.fetch(batch_size)
 	loss = None
 	if mode == 'train':
-		[_, loss, cls_level1] = sess.run([net.minimize, net.loss, net.cls_level1],
+		[_, loss, cls_level1_prob, cls_level1, rnn_features, cnn_output, cls_features_1] = \
+			sess.run([net.minimize, net.loss, net.cls_level1_prob, net.cls_level1, net.rnn_features, net.cnn_output, net.cls_features_1],
 			feed_dict = {net.frame_features: data['pad_feature'],
 						 net.labels_fine: data['labels_fine'],
 						 net.labels_rough: data['labels_rough'],
@@ -44,8 +45,7 @@ def step(sess, net, tfr, batch_size, mode, silent_step):
 		top2_accuracy = np.sum(np.logical_or((gt_labels == first_argmax), 
 					(gt_labels == second_argmax))) / first_argmax.shape[0]
 		baseline = count[0] / first_argmax.shape[0]
-		print('accuracy: %f', top_accuracy)
-		print('top 2 accuracy: %f, baseline: %f' % (top2_accuracy, baseline))
+		print('accuracy: %f, op 2 accuracy: %f, baseline: %f' % (top_accuracy, top2_accuracy, baseline))
 	return loss
 
 if __name__ == '__main__':

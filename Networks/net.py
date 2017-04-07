@@ -28,10 +28,13 @@ class tcNet(Model):
 		self.labels_fine = tf.placeholder(tf.float32, shape = [None, self.num_class])
 		#[batch_size]
 		self.batch_lengths = tf.placeholder(tf.int32, shape = [None])
+		self.new_varlist = []
+		self.varlist = []
+		self.optimize_varlist = []
 	
 	#kernel_sizes: [[w, channel, pool:<strides/None>, std]]
 	def build(self, rnn_hidden_size, cnn_kernel_sizes, cls_feature_dim, phase,
-			  lr, weight_decay = 1e-4, dropout_ratio = 0.5, train = True):
+			  lr, weight_decay, dropout_ratio = 0.5, train = True):
 		#define model hyperparameters
 		self.rnn_hidden_size = rnn_hidden_size
 		self.cnn_kernel_sizes = cnn_kernel_sizes
@@ -78,12 +81,18 @@ class tcNet(Model):
 		#[batch_size, feature_dim]
 		cnn_shapes = self.cnn_layers[-1].get_shape().as_list()
 		self.cnn_output = tf.reshape(self.cnn_layers[-1], [-1, cnn_shapes[1] * cnn_shapes[2] * cnn_shapes[3]])
-		self.cls_features = self.fc_layer(self.cnn_output,
-			[self.cnn_output.get_shape().as_list()[-1], self.cls_feature_dim], 0.01, 'cls_feature')
-		self.cls_features_relu = lrelu(self.cls_features)
-		self.cls_level1 = self.fc_layer(self.cls_features_relu, 
-				[self.cls_feature_dim, self.num_classifier], 0.01, 'cls_level1')
+		self.cls_features_1 = self.fc_layer(self.cnn_output,
+			[self.cnn_output.get_shape().as_list()[-1], self.cls_feature_dim[0]], 0.01, 'cls_feature_1')
+		self.cls_features_1_relu = tf.nn.relu(tf.nn.dropout(self.cls_features_1, 1 - self.dropout_ratio))
+		
+		self.cls_features_2 = self.fc_layer(self.cls_features_1_relu,
+			[self.cls_feature_dim[0], self.cls_feature_dim[1]], 0.01, 'cls_feature_2')
+		self.cls_features_2_relu = tf.nn.relu(tf.nn.dropout(self.cls_features_2, 1 - self.dropout_ratio))
+		
+		self.cls_level1 = self.fc_layer(self.cls_features_2_relu, 
+				[self.cls_feature_dim[1], self.num_classifier], 0.01, 'cls_rough')
 		self.cls_level1_prob = tf.nn.softmax(self.cls_level1)
+		self.varlist = tf.global_variables()
 		if self.phase[0: 6] == 'phase1':
 			self.cls_loss = tf.losses.softmax_cross_entropy(self.labels_rough,
 															self.cls_level1,
@@ -91,6 +100,7 @@ class tcNet(Model):
 			self.wd = tf.add_n(tf.get_collection('all_weight_decay'), name = 'weight_decay_summation')
 			self.loss = tf.reduce_mean(self.cls_loss) + self.wd
 			self.minimize = self.opt.minimize(self.loss)
+			self.optimize_varlist = list(set(tf.global_variables()) - set(self.varlist))
 		elif self.phase[0: 6] == 'phase2' or self.phase[0: 6] == 'phase3':
 			self.cls_level1_prob = tf.expand_dims(tf.transpose(self.cls_level1_prob, -1)
 			self.classifiers = tf.Variable(tf.random_normal(
