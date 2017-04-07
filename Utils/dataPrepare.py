@@ -2,6 +2,7 @@ import tensorflow as tf
 import pdb
 import numpy as np
 import scipy.stats as scp
+from random import shuffle
 import os
 import json
 
@@ -21,6 +22,7 @@ class tfReader:
 		self.pad_batch_max = pad_batch_max
 
 		self.record_names = [os.path.join(self.record_dir, f) for f in os.listdir(self.record_dir) if f[-8: ] == 'tfrecord']
+		shuffle(self.record_names)
 		filename_queue = tf.train.string_input_producer(self.record_names)
 		_, serialized_example = self.reader.read(filename_queue)
 
