@@ -7,6 +7,12 @@ import numpy
 from base import Model
 import pdb
 
+def lrelu(x, leak = 0.1, name = "lrelu"):
+	with tf.variable_scope(name):
+		f1 = 0.5 * (1 + leak)
+		f2 = 0.5 * (1 - leak)
+		return f1 * x + f2 * abs(x)
+
 class tcNet(Model):
 	def __init__(self, sess, num_classifier = 25, num_class = 4716):
 		self.sess = sess
@@ -63,7 +69,7 @@ class tcNet(Model):
 			else:
 				kernel_shape = [1, k_size[0], cnn_kernel_sizes[idx - 1][1], k_size[1]]
 			cnn = self.conv_layer(self.cnn_layers[-1], kernel_shape, k_size[3], 'conv%d' % idx)
-			cnn_relu = tf.nn.relu(cnn)
+			cnn_relu = lrelu(cnn)
 			if k_size[2] is not None:
 				pool_kernel_shape = [1, 1, k_size[2], 1]
 				cnn_relu = tf.nn.max_pool(cnn_relu, pool_kernel_shape, pool_kernel_shape, 'VALID', name = 'conv%d_pool' % idx)
@@ -74,7 +80,7 @@ class tcNet(Model):
 		self.cnn_output = tf.reshape(self.cnn_layers[-1], [-1, cnn_shapes[1] * cnn_shapes[2] * cnn_shapes[3]])
 		self.cls_features = self.fc_layer(self.cnn_output,
 			[self.cnn_output.get_shape().as_list()[-1], self.cls_feature_dim], 0.01, 'cls_feature')
-		self.cls_features_relu = tf.nn.relu(self.cls_features)
+		self.cls_features_relu = lrelu(self.cls_features)
 		self.cls_level1 = self.fc_layer(self.cls_features_relu, 
 				[self.cls_feature_dim, self.num_classifier], 0.01, 'cls_level1')
 		self.cls_level1_prob = tf.nn.softmax(self.cls_level1)
@@ -86,7 +92,7 @@ class tcNet(Model):
 			self.loss = tf.reduce_mean(self.cls_loss) + self.wd
 			self.minimize = self.opt.minimize(self.loss)
 		elif self.phase[0: 6] == 'phase2' or self.phase[0: 6] == 'phase3':
-			self.cls_level1_prob = tf.expand_dims(tf.transpose(tf.nn.softmax(self.cls_level1)), -1)
+			self.cls_level1_prob = tf.expand_dims(tf.transpose(self.cls_level1_prob, -1)
 			self.classifiers = tf.Variable(tf.random_normal(
 				[self.num_classifier, self.cls_feature_dim, self.num_class]), 
 				stddev = 1e-3, name = 'fine_classifiers')
