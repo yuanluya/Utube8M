@@ -5,12 +5,14 @@ import scipy.stats as scp
 from random import shuffle
 import os
 import json
+from ..Evaluation import EvaluationMetrics
 
 class tfReader:
 	def __init__(self, sess, record_dir, mode, max_video_len = 300, num_classifiers = 25,
 				 num_features = 4716, feature_vec_len = 1024, pad_batch_max = False):
 
 		self.small2big = json.load(open('../Utils/small2big.json'))
+		self.evaluator = EvaluationMetrics(num_features, 1)
 		self.sess = sess
 		self.record_dir = os.path.join(record_dir, mode)
 		self.mode = mode
