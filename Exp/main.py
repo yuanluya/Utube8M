@@ -35,7 +35,7 @@ def main():
 		restore_vars = []
 	elif flags.restore_mode == 'old':
 		restore_vars = list(set(net.varlist) - set(net.new_varlist)) 
-	if net.load(sess, '../Checkpoints', 'tcNet_%s_%d' % (flags.training_phase, flags.init_iter), restore_vars):
+	if net.load(sess, '../Checkpoints', 'tcNet_%s_%d' % (flags.init_model, flags.init_iter), restore_vars):
 		print('LOAD SUCESSFULLY')
 	elif flags.mode == 'train':
 		print('[!!!]No Model Found, Train From Scratch')
@@ -57,7 +57,7 @@ def main():
 
 			current_iter += 1
 			if current_iter % flags.snapshot_iter == 0:
-				net.save(sess, '../Checkpoints', 'tcNet_%s_%d' % (flags.training_phase, flags.init_iter + current_iter))
+				net.save(sess, '../Checkpoints', 'tcNet_%s_%d' % (flags.save_model, flags.init_iter + current_iter))
 
 if __name__ == '__main__':
 	main()

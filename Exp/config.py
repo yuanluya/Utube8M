@@ -18,10 +18,12 @@ flags.batch_size = 128
 flags.learning_rate = 1e-5
 flags.weight_decay = 2e-4
 flags.training_phase = 'phase1_lstm'
+flags.init_model = 'phase1_lstm'
+flags.save_model = 'phase1_lstm_correct'
 
 #training options
 flags.mode = 'train' #<train|val|test>
-flags.init_iter = 16000
+flags.init_iter = 23100
 flags.silent_train = False
 flags.silent_step = False
 flags.snapshot_iter = 1000

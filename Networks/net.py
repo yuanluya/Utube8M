@@ -95,8 +95,8 @@ class tcNet(Model):
 		self.varlist = tf.global_variables()
 		if self.phase[0: 6] == 'phase1':
 			self.cls_loss = tf.losses.softmax_cross_entropy(self.labels_rough,
-															self.cls_level1,
-															self.labels_rough_factor)
+															self.cls_level1, 1.0)
+															#self.labels_rough_factor)
 			self.wd = tf.add_n(tf.get_collection('all_weight_decay'), name = 'weight_decay_summation')
 			self.loss = tf.reduce_mean(self.cls_loss) + self.wd
 			self.minimize = self.opt.minimize(self.loss)

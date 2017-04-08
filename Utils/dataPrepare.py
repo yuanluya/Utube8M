@@ -89,10 +89,21 @@ class tfReader:
 			labels_rough, labels_rough_factor = self.fine2rough(batch_data)
 			for i, data in enumerate(batch_data):
 				labels_fine[i][data['labels']] = 1
-
+			denominator_one = np.sum(labels_fine ,axis = 0)
+			denominator_zero = np.ones(self.num_features) * batch_size - denominator_one
+			denominator_one = 1 / denominator_one
+			denominator_zero = 1 / denominator_zero
+			denominator_one[np.argwhere(np.isinf(denominator_one))] = 1
+			denominator_zero[np.argwhere(np.isinf(-denominator_zero))] = 1
+			fine_factor_one = labels_fine * denominator_one
+			fine_factor_zero = labels_fine - 1
+			fine_factor_zero = fine_factor_zero * denominator_zero
+			labels_fine_factor = fine_factor_one - fine_factor_zero
 			real_batch_data.update({'labels_rough': labels_rough,
 							   		'labels_rough_factor': labels_rough_factor,
-							   		'labels_fine': labels_fine,})
+							   		'labels_fine': labels_fine, 
+							   		'labels_fine_factor': labels_fine_factor
+							   		})
 			
 		return real_batch_data
 	
