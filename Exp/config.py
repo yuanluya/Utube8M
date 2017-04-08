@@ -7,7 +7,7 @@ flags.data_dir = '../Data'
 
 #model structures
 flags.rnn_hidden_size = 1024 
-flags.cls_feature_dim = [4096, 2048]
+flags.cls_feature_dim = [4096, 2048, 2048, 2048]
 flags.cnn_kernels = [[3, 1024, None, 1e-1],
  					 [3, 1024, 2, 1e-2],
 					 [3, 512, 2, 1e-2],
