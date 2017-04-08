@@ -120,7 +120,7 @@ class tfReader:
 		
 		dominate_class = int(scp.mode(rough_label)[0][0])
 		label_rough_factor = np.ones(len(batch_data))
-		label_rough_factor = label_rough_factor - 0.2 * (all_rough_labels == dominate_class)
+		label_rough_factor = label_rough_factor - 1.5 * (all_rough_labels == dominate_class)
 
 		return label_rough, label_rough_factor 
 
