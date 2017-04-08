@@ -26,6 +26,8 @@ class tcNet(Model):
 		self.labels_rough_factor = tf.placeholder(tf.float32, shape = [None])
 		#[batch_size, num_class]
 		self.labels_fine = tf.placeholder(tf.float32, shape = [None, self.num_class])
+		#[batch_size, num_class]
+		self.labels_fine_factor = tf.placeholder(tf.float32, shape = [None, self.num_class])
 		#[batch_size]
 		self.batch_lengths = tf.placeholder(tf.int32, shape = [None])
 		self.new_varlist = []
@@ -103,30 +105,44 @@ class tcNet(Model):
 			self.optimize_varlist = list(set(tf.global_variables()) - set(self.varlist))
 		elif self.phase[0: 6] == 'phase2' or self.phase[0: 6] == 'phase3':
 			self.cls_level1_prob = tf.expand_dims(tf.transpose(self.cls_level1_prob, -1))
-			self.classifiers = tf.Variable(tf.random_normal(
-				[self.num_classifier, self.cls_feature_dim, self.num_class]), 
-				stddev = 1e-3, name = 'fine_classifiers')
-			#add weight decay for this classifier variable
-			classifier_wd = tf.multiply(self.weight_decay,
-				tf.nn.l2_loss(self.classifiers), name = 'classifier_weight_decay')
-			tf.add_to_collection('all_weight_decay', classifier_wd)	
 
-			self.pre_cls_level2 = tf.expand_dims(self.cls_features_relu, 0)
-			self.pre_cls_level2 = tf.tile(self.pre_cls_level2, [self.num_classifier, 1, 1])
-			self.cls_level2 = tf.matmul(self.pre_cls_level2, self.classifiers)
+			self.classifiers_1 = tf.Variable(tf.random_normal(
+				[self.num_classifier, self.cls_feature_dim[1], self.cls_feature_dim[2]]), 
+				stddev = 1e-3, name = 'fine_classifiers_1')
+			#add weight decay for this classifier variable
+			classifier_1_wd = tf.multiply(self.weight_decay,
+				tf.nn.l2_loss(self.classifiers_1), name = 'classifier_1_weight_decay')
+			tf.add_to_collection('all_weight_decay', classifier_1_wd)
+			tf.add_to_collection('phase2_weight_decay', classifier_1_wd)	
+
+			self.pre_cls_feature_copy = tf.expand_dims(self.cls_features_2_relu, 0)
+			self.cls_feature_copy = tf.tile(self.pre_cls_feature_copy, [self.num_classifier, 1, 1])
+			self.cls_features_3 = lrelu(tf.matmul(self.cls_feature_copy, self.classifiers_1))
+
+			self.classifiers_2 = tf.Variable(tf.random_normal(
+				[self.num_classifier, self.cls_feature_dim[2], self.cls_feature_dim[3]]), 
+				stddev = 1e-3, name = 'fine_classifiers_2')
+			#add weight decay for this classifier variable
+			classifier_2_wd = tf.multiply(self.weight_decay,
+				tf.nn.l2_loss(self.classifiers_2), name = 'classifier_2_weight_decay')
+			tf.add_to_collection('all_weight_decay', classifier_2_wd)
+			tf.add_to_collection('phase2_weight_decay', classifier_2_wd)
+
+			self.cls_level2 = tf.matmul(self.cls_features_3, self.classifiers_2)
 			self.cls_level2_prob = tf.nn.sigmoid(self.cls_level2)
 			self.avg_cls_level2 = tf.multiply(self.cls_level1_prob, self.cls_level2_prob)
 			self.cls = tf.reduce_sum(self.avg_cls_level2, 0)
 			self.cls_recover = - tf.log(1 / self.cls - 1)
-			self.cls_loss = tf.nn.sigmoid_cross_entropy_with_logits(labels = self.labels_fine,
-																	logits = self.cls_recover)
+			self.cls_loss = tf.losses.sigmoid_cross_entropy(labels = self.labels_fine,
+															logits = self.cls_recover,
+															weights = self.labels_fine_factor)
 			if self.phase == 'phase2':
-				self.wd = classifier_wd
+				self.wd = tf.add_n(tf.get_collection('phase2_weight_decay'), name = 'weight_decay_summation')
 				self.loss = self.wd + self.cls_loss
-				self.minimize = self.opt.minimize(self.loss, var_list = [self.classifiers])
+				self.minimize = self.opt.minimize(self.loss, var_list = [self.classifiers_1, self.classifiers_2])
 			else:
 				self.wd = tf.add_n(tf.get_collection('all_weight_decay'), name = 'weight_decay_summation')
-				self.loss = self.wd + self.cls_loss
+				self.loss = self.wd + tf.reduce_mean(tf.reduce_sum(self.cls_loss, 1))
 				self.minimize = self.opt.minimize(self.loss)
 		else:
 			print('Wrong Phase number: <phase1|phase2|phase3>')
