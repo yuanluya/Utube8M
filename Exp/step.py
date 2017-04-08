@@ -42,14 +42,15 @@ def step(sess, net, tfr, batch_size, mode, silent_step):
 		second_argmax = np.nanargmax(cls_level1, 1)
 		count_gt = scp.mode(gt_labels)[1]
 		count_pred = scp.mode(first_argmax)[1]
+		num_unique = np.unique(first_argmax).shape[0]
 		top_accuracy = np.sum(gt_labels == first_argmax) / first_argmax.shape[0]
 		top2_accuracy = np.sum(np.logical_or((gt_labels == first_argmax), 
 					(gt_labels == second_argmax))) / first_argmax.shape[0]
 		baseline = count_gt[0] / first_argmax.shape[0]
 		performance = count_pred[0] / first_argmax.shape[0]
 		print(first_argmax)
-		print('accuracy: %f, top 2 accuracy: %f, baseline: %f, performance: %f' \
-			% (top_accuracy, top2_accuracy, baseline, performance))
+		print('accuracy: %f, top 2 accuracy: %f, baseline: %f, performance: %f, unique: %d' \
+			% (top_accuracy, top2_accuracy, baseline, performance, num_unique))
 		#tfr.accumulate(cls, data['labels_fine'], loss)
 	return loss
 

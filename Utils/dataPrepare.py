@@ -5,7 +5,9 @@ import scipy.stats as scp
 from random import shuffle
 import os
 import json
-from ..Evaluation import EvaluationMetrics
+import sys
+sys.path.append('../Evaluation')
+from eval_util import EvaluationMetrics
 
 class tfReader:
 	def __init__(self, sess, record_dir, mode, max_video_len = 300, num_classifiers = 25,
