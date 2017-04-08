@@ -15,9 +15,9 @@ flags.cnn_kernels = [[3, 1024, None, 1e-1],
 
 #model hyperparameters
 flags.batch_size = 128
-flags.learning_rate = 1e-5
+flags.learning_rate = [1e-5, 1e-4, 1e-5]
 flags.weight_decay = 2e-4
-flags.training_phase = 'phase1_lstm'
+flags.training_phase = 'phase1' #<phase1|phase2|phasae3>
 flags.init_model = 'phase1_lstm'
 flags.save_model = 'phase1_lstm_correct'
 

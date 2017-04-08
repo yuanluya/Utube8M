@@ -43,7 +43,9 @@ class tcNet(Model):
 		self.cls_feature_dim = cls_feature_dim
 		self.phase = phase
 		self.lr = lr
-		self.opt = tf.train.AdamOptimizer(self.lr)
+		self.opt_1 = tf.train.AdamOptimizer(self.lr[0])
+		self.opt_2 = tf.train.AdamOptimizer(self.lr[1])
+		self.opt_3 = tf.train.AdamOptimizer(self.lr[2])
 		self.weight_decay = weight_decay
 		self.dropout_ratio = dropout_ratio
 		self.train = train
@@ -95,15 +97,16 @@ class tcNet(Model):
 				[self.cls_feature_dim[1], self.num_classifier], 0.01, 'cls_rough')
 		self.cls_level1_prob = tf.nn.softmax(self.cls_level1)
 		self.varlist = tf.global_variables()
-		if self.phase[0: 6] == 'phase1':
-			self.cls_loss = tf.losses.softmax_cross_entropy(self.labels_rough,
-															self.cls_level1,
-															self.labels_rough_factor)
-			self.wd = tf.add_n(tf.get_collection('all_weight_decay'), name = 'weight_decay_summation')
-			self.loss = tf.reduce_mean(self.cls_loss) + self.wd
-			self.minimize = self.opt.minimize(self.loss)
-			self.optimize_varlist = list(set(tf.global_variables()) - set(self.varlist))
-		elif self.phase[0: 6] == 'phase2' or self.phase[0: 6] == 'phase3':
+		#phase 1 share in all phases
+		self.cls_loss_rough = tf.losses.softmax_cross_entropy(self.labels_rough,
+														self.cls_level1,
+														self.labels_rough_factor)
+		self.wd = tf.add_n(tf.get_collection('all_weight_decay'), name = 'weight_decay_summation')
+		self.loss = tf.reduce_mean(self.cls_loss_rough) + self.wd
+		self.phase1_varlist = tf.global_variables()
+		self.minimize_rough = self.opt_1.minimize(self.loss, var_list = self.phase1_varlist)
+
+		if self.phase == 'phase2' or self.phase == 'phase3':
 			self.cls_level1_prob = tf.expand_dims(tf.transpose(self.cls_level1_prob, -1))
 
 			self.classifiers_1 = tf.Variable(tf.random_normal(
@@ -139,12 +142,13 @@ class tcNet(Model):
 			if self.phase == 'phase2':
 				self.wd = tf.add_n(tf.get_collection('phase2_weight_decay'), name = 'weight_decay_summation')
 				self.loss = self.wd + self.cls_loss
-				self.minimize = self.opt.minimize(self.loss, var_list = [self.classifiers_1, self.classifiers_2])
+				self.minimize_fine = self.opt_2.minimize(self.loss, var_list = [self.classifiers_1, self.classifiers_2])
 			else:
 				self.wd = tf.add_n(tf.get_collection('all_weight_decay'), name = 'weight_decay_summation')
 				self.loss = self.wd + tf.reduce_mean(tf.reduce_sum(self.cls_loss, 1))
-				self.minimize = self.opt.minimize(self.loss)
-		else:
+				self.minimize_fine = self.opt_3.minimize(self.loss)
+			self.minimize = tf.group(self.minimize_rough, self.minimize_fine)
+		elif self.phase != 'phase1':
 			print('Wrong Phase number: <phase1|phase2|phase3>')
 			assert(0)
 		
