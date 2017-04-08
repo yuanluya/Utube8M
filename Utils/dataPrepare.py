@@ -89,6 +89,8 @@ class tfReader:
 			labels_rough, labels_rough_factor = self.fine2rough(batch_data)
 			for i, data in enumerate(batch_data):
 				labels_fine[i][data['labels']] = 1
+
+			#calculate label_fine_factor
 			denominator_one = np.sum(labels_fine ,axis = 0)
 			denominator_zero = np.ones(self.num_features) * batch_size - denominator_one
 			denominator_one = 1 / denominator_one
@@ -116,7 +118,11 @@ class tfReader:
 			all_rough_labels[b] = rough_label
 			label_rough[b, rough_label] = 1
 		
-		return label_rough, np.array([1 / np.sum(all_rough_labels == l) for l in all_rough_labels])
+		dominate_class = int(scp.mode(rough_label)[0][0])
+		label_rough_factor = np.ones(len(batch_data))
+		label_rough_factor = label_rough_factor - 0.2 * (label_rough_factor == dominate_class)
+
+		return label_rough, label_rough_factor 
 
 if __name__ == '__main__':
 	main()
