@@ -14,15 +14,17 @@ def step(sess, net, tfr, batch_size, mode, silent_step):
 	data = tfr.fetch(batch_size)
 	loss = None
 	if mode == 'train':
-		[_, loss, cls_level1_prob, cls_level1, rnn_features, cnn_output, cls_features_1] = \
-			sess.run([net.minimize, net.loss, net.cls_level1_prob, net.cls_level1, net.rnn_features, net.cnn_output, net.cls_features_1],
+		#[_, loss, cls_level1_prob, cls_level1, cls] = \
+		#	sess.run([net.minimize, net.loss, net.cls_level1_prob, net.cls_level1, net.cls],
+		[_, loss, cls_level1_prob, cls_level1] = \
+			sess.run([net.minimize, net.loss, net.cls_level1_prob, net.cls_level1],
 			feed_dict = {net.frame_features: data['pad_feature'],
 						 net.labels_fine: data['labels_fine'],
 						 net.labels_rough: data['labels_rough'],
 						 net.labels_rough_factor: data['labels_rough_factor'],
 						 net.batch_lengths: data['original_len']})
 	elif mode == 'val':
-		[loss, cls_level1] = sess.run([net.loss, net.cls_level1],
+		[loss, cls_level1, cls] = sess.run([net.loss, net.cls_level1, net.cls],
 			feed_dict = {net.frame_features: data['pad_feature'],
 						 net.labels_fine: data['labels_fine'],
 						 net.labels_rough: data['labels_rough'],
@@ -31,7 +33,6 @@ def step(sess, net, tfr, batch_size, mode, silent_step):
 	elif mode == 'test':
 		[cls] = sess.run([net.cls],
 			feed_dict = {net.frame_features: data['pad_feature'],
-						 net.labels_rough_factor: data['labels_rough_factor'],
 						 net.batch_lengths: data['original_len']})
 
 	if not silent_step and mode != 'test':
@@ -49,6 +50,7 @@ def step(sess, net, tfr, batch_size, mode, silent_step):
 		print(first_argmax)
 		print('accuracy: %f, top 2 accuracy: %f, baseline: %f, performance: %f' \
 			% (top_accuracy, top2_accuracy, baseline, performance))
+		#tfr.accumulate(cls, data['labels_fine'], loss)
 	return loss
 
 if __name__ == '__main__':
