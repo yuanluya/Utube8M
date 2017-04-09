@@ -17,7 +17,7 @@ flags.cnn_kernels = [[3, 1024, None, 1e-1],
 flags.batch_size = 128
 flags.learning_rate = [1e-5, 1e-4, 1e-5]
 flags.weight_decay = 2e-4
-flags.phase1_bias = np.array([1, 1, 5, 3, 3, 3, 3, 
+flags.rough_bias = np.array([1, 1, 5, 3, 3, 3, 3, 
 							  1, 3, 3, 1, 5, 7, 3, 
 					 		  5, 13, 5, 3, 1, 3,
 					 		  3, 5, 1, 3, 3])
