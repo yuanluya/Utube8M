@@ -124,14 +124,10 @@ class tfReader:
 		
 		dominate_class = int(scp.mode(rough_label)[0][0])
 		label_rough_factor = np.ones(len(batch_data))
-<<<<<<< HEAD
-		label_rough_factor = label_rough_factor - 0.5 * (all_rough_labels == dominate_class)
-		return label_rough, label_rough_factor 
-=======
 		label_rough_factor = label_rough_factor + 10 * (all_rough_labels == dominate_class)
 		count = np.array([np.sum(all_rough_labels == l) for l in all_rough_labels]) 
+
 		return label_rough, label_rough_factor / count 
->>>>>>> fd0981309a0375b64748fb5d894468ff8d7a2834
 
 if __name__ == '__main__':
 	main()

@@ -51,7 +51,8 @@ def step(sess, net, tfr, batch_size, mode, silent_step):
 		performance = count_pred[0] / first_argmax.shape[0]
 		print('[1]accuracy: %f, top 2 accuracy: %f, baseline: %f, performance: %f, unique: %d/%d' \
 			% (top_accuracy, top2_accuracy, baseline, performance, num_unique_gt, num_unique_pred))
-		print('\t[2]', tfr.evaluator.accumulate(cls, data['labels_fine'], loss))
+		if net.phase != 'phase1':
+			print('\t[2]', tfr.evaluator.accumulate(cls, data['labels_fine'], loss))
 	return loss
 
 if __name__ == '__main__':

@@ -64,7 +64,7 @@ class tcNet(Model):
 			sequence_length = self.batch_lengths,
 			inputs = self.frame_features)
 		#[batch_size, max_frame_size, rnn_hidden_size]
-		self.rnn_features = self.bi_features[0] + self.bi_features[1]
+		self.rnn_features = tf.maximum(self.bi_features[0], self.bi_features[1])
 
 		#define cnn
 		#[batch_size, 1, max_frame_size, rnn_hidden_size]
@@ -106,11 +106,10 @@ class tcNet(Model):
 		self.loss = tf.reduce_mean(self.cls_loss_rough) + self.wd
 		self.phase1_varlist = tf.global_variables()
 		self.minimize_rough = self.opt_1.minimize(self.loss, var_list = self.phase1_varlist)
-
+		self.minimize = self.minimize_rough
+		self.cls = tf.no_op()
 		if self.phase == 'phase2' or self.phase == 'phase3':
 			self.cls_level1_prob = tf.expand_dims(tf.transpose(self.cls_level1_prob), -1)
->>>>>>> fd0981309a0375b64748fb5d894468ff8d7a2834
-
 			self.classifiers_1 = tf.Variable(tf.random_normal(
 				[self.num_classifier, self.cls_feature_dim[1], self.cls_feature_dim[2]],
 				stddev = 1e-2, name = 'fine_classifiers_1'))
