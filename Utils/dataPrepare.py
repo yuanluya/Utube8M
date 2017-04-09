@@ -122,8 +122,7 @@ class tfReader:
 			rough_label = scp.mode(temp_rough)[0][0]
 			all_rough_labels[b] = rough_label
 			label_rough[b, rough_label] = 1
-		
-		label_rough_factor = np.array([self.rough_bias[c] for c in all_rough_labels])
+		label_rough_factor = np.array([self.rough_bias[int(c)] for c in all_rough_labels])
 		count = np.array([1 / np.sum(all_rough_labels == l) for l in all_rough_labels])
 		return label_rough, label_rough_factor * count
 

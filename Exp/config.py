@@ -22,12 +22,12 @@ flags.rough_bias = np.array([1, 1, 5, 3, 3, 3, 3,
 					 		  5, 13, 5, 3, 1, 3,
 					 		  3, 5, 1, 3, 3])
 flags.training_phase = 'phase1' #<phase1|phase2|phasae3>
-flags.init_model = 'phase1_lstm_correct'
-flags.save_model = 'phase1_lstm_correct'
+flags.init_model = 'phase1_lstm'
+flags.save_model = 'phase1_lstm'
 
 #training options
 flags.mode = 'train' #<train|val|test>
-flags.init_iter = 23600
+flags.init_iter = 23100
 flags.silent_train = False
 flags.silent_step = False
 flags.snapshot_iter = 400

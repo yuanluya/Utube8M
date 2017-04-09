@@ -49,6 +49,7 @@ def step(sess, net, tfr, batch_size, mode, silent_step):
 					(gt_labels == second_argmax))) / first_argmax.shape[0]
 		baseline = count_gt[0] / first_argmax.shape[0]
 		performance = count_pred[0] / first_argmax.shape[0]
+		print(first_argmax)
 		print('[1]accuracy: %f, top 2 accuracy: %f, baseline: %f, performance: %f, unique: %d/%d' \
 			% (top_accuracy, top2_accuracy, baseline, performance, num_unique_gt, num_unique_pred))
 		if net.phase != 'phase1':
