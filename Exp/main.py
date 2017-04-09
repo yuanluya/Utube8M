@@ -34,7 +34,7 @@ def main():
 	if flags.restore_mode == 'all':
 		restore_vars = []
 	elif flags.restore_mode == 'old':
-		restore_vars = list(set(net.varlist) - set(net.new_varlist)) 
+		restore_vars = net.phase1_varlist 
 	if net.load(sess, '../Checkpoints', 'tcNet_%s_%d' % (flags.init_model, flags.init_iter), restore_vars):
 		print('LOAD SUCESSFULLY')
 	elif flags.mode == 'train':

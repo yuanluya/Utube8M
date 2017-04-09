@@ -19,6 +19,7 @@ def step(sess, net, tfr, batch_size, mode, silent_step):
 			feed_dict = {net.frame_features: data['pad_feature'],
 						 net.labels_fine: data['labels_fine'],
 						 net.labels_rough: data['labels_rough'],
+						 net.labels_fine_factor: data['labels_fine_factor'],
 						 net.labels_rough_factor: data['labels_rough_factor'],
 						 net.batch_lengths: data['original_len']})
 	elif mode == 'val':
@@ -26,6 +27,7 @@ def step(sess, net, tfr, batch_size, mode, silent_step):
 			feed_dict = {net.frame_features: data['pad_feature'],
 						 net.labels_fine: data['labels_fine'],
 						 net.labels_rough: data['labels_rough'],
+						 net.labels_fine_factor: data['labels_fine_factor'],
 						 net.labels_rough_factor: data['labels_rough_factor'],
 						 net.batch_lengths: data['original_len']})
 	elif mode == 'test':
@@ -35,9 +37,9 @@ def step(sess, net, tfr, batch_size, mode, silent_step):
 
 	if not silent_step and mode != 'test':
 		gt_labels = np.nonzero(data['labels_rough'])[1]
-		first_argmax = np.argmax(cls_level1, 1)
-		cls_level1[np.arange(128), first_argmax] = np.nan
-		second_argmax = np.nanargmax(cls_level1, 1)
+		ranking = np.argsort(cls_level1, axis = 1)
+		first_argmax = ranking[:, -1]
+		second_argmax = ranking[:, -2]
 		count_gt = scp.mode(gt_labels)[1]
 		count_pred = scp.mode(first_argmax)[1]
 		num_unique_pred = np.unique(first_argmax).shape[0]
@@ -47,9 +49,9 @@ def step(sess, net, tfr, batch_size, mode, silent_step):
 					(gt_labels == second_argmax))) / first_argmax.shape[0]
 		baseline = count_gt[0] / first_argmax.shape[0]
 		performance = count_pred[0] / first_argmax.shape[0]
-		print('accuracy: %f, top 2 accuracy: %f, baseline: %f, performance: %f, unique: %d/%d' \
+		print('[1]accuracy: %f, top 2 accuracy: %f, baseline: %f, performance: %f, unique: %d/%d' \
 			% (top_accuracy, top2_accuracy, baseline, performance, num_unique_gt, num_unique_pred))
-		print(tfr.accumulate(cls, data['labels_fine'], loss))
+		print('\t[2]', tfr.evaluator.accumulate(cls, data['labels_fine'], loss))
 	return loss
 
 if __name__ == '__main__':
