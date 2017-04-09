@@ -23,7 +23,7 @@ flags.save_model = 'phase1_lstm_correct'
 
 #training options
 flags.mode = 'train' #<train|val|test>
-flags.init_iter = 26600
+flags.init_iter = 27600
 flags.silent_train = False
 flags.silent_step = False
 flags.snapshot_iter = 500
