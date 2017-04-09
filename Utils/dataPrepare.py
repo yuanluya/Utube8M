@@ -10,7 +10,7 @@ sys.path.append('../Evaluation')
 from eval_util import EvaluationMetrics
 
 class tfReader:
-	def __init__(self, sess, record_dir, mode, max_video_len = 300, num_classifiers = 25,
+	def __init__(self, sess, record_dir, mode, rough_bias, max_video_len = 300, num_classifiers = 25,
 				 num_features = 4716, feature_vec_len = 1024, pad_batch_max = False):
 
 		self.small2big = json.load(open('../Utils/small2big.json'))
@@ -18,6 +18,7 @@ class tfReader:
 		self.sess = sess
 		self.record_dir = os.path.join(record_dir, mode)
 		self.mode = mode
+		self.rough_bias = rough_bias
 		self.max_video_len = max_video_len
 		self.reader = tf.TFRecordReader()
 		self.num_classifiers = num_classifiers
@@ -122,12 +123,8 @@ class tfReader:
 			all_rough_labels[b] = rough_label
 			label_rough[b, rough_label] = 1
 		
-		dominate_class = int(scp.mode(rough_label)[0][0])
-		label_rough_factor = np.ones(len(batch_data))
-		label_rough_factor = label_rough_factor + 10 * (all_rough_labels == dominate_class)
-		count = np.array([np.sum(all_rough_labels == l) for l in all_rough_labels]) 
-
-		return label_rough, label_rough_factor / count 
+		label_rough_factor = np.array([self.rough_bias[c] for c in rough_label])
+		return label_rough, label_rough_factor
 
 if __name__ == '__main__':
 	main()

@@ -26,7 +26,7 @@ def main():
 				  flags.cls_feature_dim, flags.training_phase, 
 				  flags.learning_rate, flags.weight_decay, train = (flags.mode == 'train'))
 		
-	tfr = tfReader(sess, flags.data_dir, flags.mode)
+	tfr = tfReader(sess, flags.data_dir, flags.mode, flags.rough_bias)
 	init = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer()) 
 	sess.run(init)
 	tf.train.start_queue_runners(sess = sess)

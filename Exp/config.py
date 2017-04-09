@@ -17,6 +17,10 @@ flags.cnn_kernels = [[3, 1024, None, 1e-1],
 flags.batch_size = 128
 flags.learning_rate = [1e-5, 1e-4, 1e-5]
 flags.weight_decay = 2e-4
+flags.phase1_bias = np.array([1, 1, 5, 3, 3, 3, 3, 
+							  1, 3, 3, 1, 5, 7, 3, 
+					 		  5, 13, 5, 3, 1, 3,
+					 		  3, 5, 1, 3, 3])
 flags.training_phase = 'phase1' #<phase1|phase2|phasae3>
 flags.init_model = 'phase1_lstm_correct'
 flags.save_model = 'phase1_lstm_correct'
@@ -29,5 +33,5 @@ flags.silent_step = False
 flags.snapshot_iter = 400
 flags.print_iter = 5
 flags.max_iter= 10000
-flags.restore_mode = 'old' #<all|old>
+flags.restore_mode = 'all' #<all|old>
 
