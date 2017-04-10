@@ -98,10 +98,10 @@ class tcNet(Model):
 		self.cls_level1_prob = tf.nn.softmax(self.cls_level1)
 
 		#phase 1 share in all phases
-		self.cls_loss_rough = tf.losses.softmax_cross_entropy(self.labels_rough,
+		self.cls_loss_rough_ = tf.losses.softmax_cross_entropy(self.labels_rough,
 														self.cls_level1,
 														self.labels_rough_factor)
-		self.cls_loss_rough_ = self.softmax_loss(self.cls_level1, self.labels_rough, self.labels_rough_factor)
+		self.cls_loss_rough = self.softmax_loss(self.cls_level1, self.labels_rough, self.labels_rough_factor)
 		self.wd = tf.add_n(tf.get_collection('all_weight_decay'), name = 'weight_decay_summation')
 		self.loss_level1 = tf.reduce_mean(self.cls_loss_rough) + self.wd
 		self.phase1_varlist = tf.global_variables()
