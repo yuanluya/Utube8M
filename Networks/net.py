@@ -107,9 +107,8 @@ class tcNet(Model):
 		self.cls_features_4 = tf.nn.relu(self.fc_layer(self.cls_features_3, [self.cls_feature_dim[2], self.cls_feature_dim[3]], 1e-2, 'cls_feature_4')[0])
 		self.cls_recover, _ = self.fc_layer(self.cls_features_4, [self.cls_feature_dim[3], self.num_class], 1e-2, 'cls_pred')
 		self.cls = tf.nn.sigmoid(self.cls_recover)
-		self.cls_loss = self.cross_entropy_loss(self.cls_recover, self.labels_fine,
-												weights = self.labels_fine_factor)
-		
+		self.cls_loss = self.calculate_loss(self.cls, self.labels_fine, self.labels_fine_factor)
+		self.cls_loss_ = tf.losses.sigmoid_cross_entropy(self.labels_fine, self.cls_recover, weights = self.labels_fine_factor)
 		self.wd = tf.add_n(tf.get_collection('all_weight_decay'), name = 'weight_decay_summation')
 		self.loss = self.cls_loss  + self.wd
 		self.minimize = self.opt_1.minimize(self.loss)
@@ -145,5 +144,5 @@ class tcNet(Model):
 			float_labels = tf.cast(labels, tf.float32)
 			cross_entropy_loss = float_labels * tf.log(predictions + epsilon) + (
 			  1 - float_labels) * tf.log(1 - predictions + epsilon)
-			cross_entropy_loss = tf.negative(cross_entropy_loss)
+			cross_entropy_loss = tf.negative(cross_entropy_loss) * bias
 			return tf.reduce_mean(tf.reduce_sum(cross_entropy_loss, 1))

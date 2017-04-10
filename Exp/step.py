@@ -16,8 +16,8 @@ def step(sess, net, tfr, batch_size, mode, silent_step):
 	if mode == 'train':
 		#[_, loss, cls_level1_prob, cls_level1, cls] = \
 		#	sess.run([net.minimize, net.loss, net.cls_level1_prob, net.cls_level1, net.cls],
-		[_, loss, cls] = \
-			sess.run([net.minimize, net.loss, net.cls],
+		[_, loss, cls, cls_loss, cls_loss_] = \
+			sess.run([net.minimize, net.loss, net.cls, net.cls_loss, net.cls_loss_],
 			feed_dict = {net.frame_features: data['pad_feature'],
 						 net.labels_fine: data['labels_fine'],
 						 net.labels_rough: data['labels_rough'],
@@ -63,6 +63,7 @@ def step(sess, net, tfr, batch_size, mode, silent_step):
 		print('predictions: %d' % np.sum(pos))
 		print('gt_diversity: %d' % np.unique(np.nonzero(data['labels_fine'])[1]).shape[0])
 		print('pred_diversity: %d' % np.unique(np.nonzero(pos)[1]).shape[0])
+		print('google: %f, ours: %f' % (cls_loss, cls_loss_))
 		print('\t[2]', tfr.evaluator.accumulate(cls, data['labels_fine'], loss))
 	return loss
 
