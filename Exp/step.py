@@ -14,8 +14,8 @@ def step(sess, net, tfr, batch_size, mode, silent_step):
 	data = tfr.fetch(batch_size)
 	loss = None
 	if mode == 'train':
-		[_, loss, cls_level1_prob, cls_level1, cls] = \
-			sess.run([net.minimize, net.loss, net.cls_level1_prob, net.cls_level1, net.cls],
+		[_, loss, cls_level1_prob, cls_level1, cls, cls_rough_loss, cls_rough_loss_] = \
+			sess.run([net.minimize, net.loss, net.cls_level1_prob, net.cls_level1, net.cls, net.cls_rough_loss, net.cls_rough_loss_],
 			feed_dict = {net.frame_features: data['pad_feature'],
 						 net.labels_fine: data['labels_fine'],
 						 net.labels_rough: data['labels_rough'],

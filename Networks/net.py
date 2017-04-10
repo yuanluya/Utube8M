@@ -101,6 +101,7 @@ class tcNet(Model):
 		self.cls_loss_rough = tf.losses.softmax_cross_entropy(self.labels_rough,
 														self.cls_level1,
 														self.labels_rough_factor)
+		self.cls_loss_rough_ = self.softmax_loss(self.cls_level1, self.labels_rough, self.labels_rough_factor)
 		self.wd = tf.add_n(tf.get_collection('all_weight_decay'), name = 'weight_decay_summation')
 		self.loss_level1 = tf.reduce_mean(self.cls_loss_rough) + self.wd
 		self.phase1_varlist = tf.global_variables()
@@ -127,7 +128,7 @@ class tcNet(Model):
 			self.cls_level1_prob = tf.expand_dims(tf.transpose(self.cls_level1_prob), -1)
 			self.avg_cls_level2 = tf.multiply(self.cls_level1_prob, self.cls_level2_prob)
 			self.cls = tf.reduce_sum(self.avg_cls_level2, 0)
-			self.cls_loss = self.calculate_loss(self.cls, self.labels_fine, self.labels_fine_factor)
+			self.cls_loss = self.xentropy_loss(self.cls, self.labels_fine, self.labels_fine_factor)
 			if self.phase == 'phase2':
 				self.wd = tf.add_n(tf.get_collection('all_weight_decay'), name = 'weight_decay_summation')
 				self.loss = self.wd + self.cls_loss 
@@ -167,7 +168,7 @@ class tcNet(Model):
 			bias = tf.get_variable(name = 'bias', initializer = init_b, shape = [shape[-1]])
 			return tf.nn.bias_add(tf.matmul(input, W), bias), [W, bias]
 
-	def calculate_loss(self, predictions, labels, bias):
+	def xentropy_loss(self, predictions, labels, bias):
 		with tf.name_scope("loss_xent"):
 			epsilon = 10e-6
 			float_labels = tf.cast(labels, tf.float32)
@@ -175,3 +176,18 @@ class tcNet(Model):
 				(1 - float_labels) * tf.log(1 - predictions + epsilon)
 			cross_entropy_loss = tf.negative(cross_entropy_loss) * bias
 			return tf.reduce_mean(tf.reduce_sum(cross_entropy_loss, 1))
+
+	def softmax_loss(self, predictions, labels, bias):
+		with tf.name_scope("loss_softmax"):
+			epsilon = 10e-8
+			float_labels = tf.cast(labels, tf.float32)
+			# l1 normalization (labels are no less than 0)
+			label_rowsum = tf.maximum(
+				tf.reduce_sum(float_labels, 1, keep_dims=True),
+				epsilon)
+			norm_float_labels = tf.div(float_labels, label_rowsum)
+			softmax_outputs = tf.nn.softmax(predictions)
+			softmax_loss = tf.negative(tf.reduce_sum(
+				tf.multiply(norm_float_labels, tf.log(softmax_outputs)), 1))
+			softmax_loss = softmax_loss * bias
+			return tf.reduce_mean(softmax_loss)
