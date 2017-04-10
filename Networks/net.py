@@ -64,29 +64,11 @@ class tcNet(Model):
 			sequence_length = self.batch_lengths,
 			inputs = self.frame_features)
 		#[batch_size, max_frame_size, rnn_hidden_size]
-		self.rnn_features = tf.add(self.bi_features[0], self.bi_features[1])
-
-		#define cnn
-		#[batch_size, 1, max_frame_size, rnn_hidden_size]
-		self.cnn_inputs = tf.expand_dims(self.rnn_features, 1)
-		self.cnn_layers = [self.cnn_inputs]
-		for idx, k_size in enumerate(cnn_kernel_sizes):
-			if idx == 0:
-				kernel_shape = [1, k_size[0], self.rnn_hidden_size, k_size[1]]
-			else:
-				kernel_shape = [1, k_size[0], cnn_kernel_sizes[idx - 1][1], k_size[1]]
-			cnn = self.conv_layer(self.cnn_layers[-1], kernel_shape, k_size[3], 'conv%d' % idx)
-			cnn_relu = lrelu(cnn)
-			if k_size[2] is not None:
-				pool_kernel_shape = [1, 1, k_size[2], 1]
-				cnn_relu = tf.nn.max_pool(cnn_relu, pool_kernel_shape, pool_kernel_shape, 'VALID', name = 'conv%d_pool' % idx)
-			self.cnn_layers.append(cnn_relu)
+		self.rnn_features = tf.reduce_mean(tf.maximum(self.bi_features[0], self.bi_features[1]), 1)
 		
 		#[batch_size, feature_dim]
-		cnn_shapes = self.cnn_layers[-1].get_shape().as_list()
-		self.cnn_output = tf.reshape(self.cnn_layers[-1], [-1, cnn_shapes[1] * cnn_shapes[2] * cnn_shapes[3]])
-		self.cls_features_1, _ = self.fc_layer(self.cnn_output,
-			[self.cnn_output.get_shape().as_list()[-1], self.cls_feature_dim[0]], 0.01, 'cls_feature_1')
+		self.cls_features_1, _ = self.fc_layer(self.rnn_features,
+			[self.rnn_hidden_size, self.cls_feature_dim[0]], 0.01, 'cls_feature_1')
 		self.cls_features_1_relu = tf.nn.relu(tf.nn.dropout(self.cls_features_1, 1 - self.dropout_ratio))
 		
 		self.cls_features_2, _ = self.fc_layer(self.cls_features_1_relu,
