@@ -22,20 +22,12 @@ flags.rough_bias = np.array([1, 1, 5, 3, 3, 3, 3,
 					 		  5, 10, 5, 3, 1, 3,
 					 		  3, 5, 1, 3, 3])
 flags.training_phase = 'phase2' #<phase1|phase2|phasae3>
-<<<<<<< HEAD
-flags.init_model = 'phase2'
-=======
-flags.init_model = 'phase1_lstm_manual'
->>>>>>> da1dfbceb478013a0a1f70085f884c945ae0132b
-flags.save_model = 'phase2'
+flags.init_model = 'detection'
+flags.save_model = 'detection'
 
 #training options
 flags.mode = 'train' #<train|val|test>
-<<<<<<< HEAD
-flags.init_iter = 27200
-=======
-flags.init_iter = 27900
->>>>>>> da1dfbceb478013a0a1f70085f884c945ae0132b
+flags.init_iter = 0
 flags.silent_train = False
 flags.silent_step = False
 flags.snapshot_iter = 500
