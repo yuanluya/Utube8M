@@ -101,11 +101,8 @@ class tcNet(Model):
 		self.cls_loss_rough = tf.losses.softmax_cross_entropy(self.labels_rough,
 														self.cls_level1,
 														self.labels_rough_factor)
-		self.wd = tf.add_n(tf.get_collection('all_weight_decay'), name = 'weight_decay_summation')
-		self.loss = tf.reduce_mean(self.cls_loss_rough) + self.wd
 		self.phase1_varlist = tf.global_variables()
-		self.minimize_rough = self.opt_1.minimize(self.loss, var_list = features_1_vars + features_2_vars)
-		self.minimize = self.minimize_rough
+		#self.minimize_rough = self.opt_1.minimize(self.loss, var_list = features_1_vars + features_2_vars)
 		self.cls_features_3 = tf.nn.relu(self.fc_layer(self.cls_features_2_relu, [self.cls_feature_dim[1], self.cls_feature_dim[2]], 1e-1, 'cls_feature_3')[0])
 		self.cls_features_4 = tf.nn.relu(self.fc_layer(self.cls_features_3, [self.cls_feature_dim[2], self.cls_feature_dim[3]], 1e-1, 'cls_feature_4')[0])
 		self.cls_recover, _ = self.fc_layer(self.cls_features_4, [self.cls_feature_dim[3], self.num_class], 1e-2, 'cls_pred')
@@ -113,7 +110,10 @@ class tcNet(Model):
 		self.cls_loss = tf.losses.sigmoid_cross_entropy(self.labels_fine,
 														self.cls_recover,
 														weights = self.labels_fine_factor)
-		self.minimize = tf.group(self.opt_1.minimize(self.loss, var_list = self.phase1_varlist), self.minimize_rough, self.minimize_fine)
+		
+		self.wd = tf.add_n(tf.get_collection('all_weight_decay'), name = 'weight_decay_summation')
+		self.loss = self.cls_loss  + self.wd
+		self.minimize = self.opt_1.minimize(self.loss)
 		elif self.phase != 'phase1':
 			print('Wrong Phase number: <phase1|phase2|phase3>')
 			assert(0)
