@@ -105,7 +105,7 @@ class tfReader:
 			fine_factor_one = labels_fine * denominator_one
 			fine_factor_zero = labels_fine - 1
 			fine_factor_zero = fine_factor_zero * denominator_zero
-			labels_fine_factor = fine_factor_one - 2 * fine_factor_zero
+			labels_fine_factor = fine_factor_one - 3 * fine_factor_zero
 			real_batch_data.update({'labels_rough': labels_rough,
 							   		'labels_rough_factor': labels_rough_factor,
 							   		'labels_fine': labels_fine, 
