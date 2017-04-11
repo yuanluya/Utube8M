@@ -4,6 +4,8 @@
 **.tfrecord
 **.csv
 **.pbs
+**.swo
+**.swn
 /Checkpoints/*
 /Data/*
 /Exp/seg.pbs
