@@ -8,3 +8,4 @@
 /Data/*
 /Exp/seg.pbs
 /Exp/not_example_script*
+/Exp/.config.py.sw*
