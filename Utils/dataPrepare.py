@@ -124,7 +124,7 @@ class tfReader:
 			label_rough[b, rough_label] = 1
 		label_rough_factor = np.array([self.rough_bias[int(c)] for c in all_rough_labels])
 		count = np.array([1 / np.sum(all_rough_labels == l) for l in all_rough_labels])
-		return label_rough, label_rough_factor * count
+		return label_rough, count# * label_rough_factor
 
 if __name__ == '__main__':
 	main()

@@ -86,6 +86,7 @@ class tcNet(Model):
 		self.cls_loss_rough_ = self.softmax_loss(self.cls_level1, self.labels_rough, self.labels_rough_factor)
 		self.wd = tf.add_n(tf.get_collection('all_weight_decay'), name = 'weight_decay_summation')
 		self.loss_level1 = tf.reduce_mean(self.cls_loss_rough) + self.wd
+		self.loss = self.loss_level1
 		self.phase1_varlist = tf.global_variables()
 		self.minimize_rough = self.opt_1.minimize(self.loss_level1)
 		self.minimize = self.minimize_rough 
