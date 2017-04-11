@@ -23,7 +23,7 @@ class tcNet(Model):
 		#[batch_size, num_class]
 		self.labels_rough = tf.placeholder(tf.float32, shape = [None, self.num_classifier])
 		#[batch_size]
-		self.labels_rough_factor = tf.placeholder(tf.float32, shape = [None])
+		self.labels_rough_factor = tf.placeholder(tf.float32, shape = [None, self.num_classifier])
 		#[batch_size, num_class]
 		self.labels_fine = tf.placeholder(tf.float32, shape = [None, self.num_class])
 		#[batch_size, num_class]
@@ -68,24 +68,29 @@ class tcNet(Model):
 		
 		#[batch_size, feature_dim]
 		self.cls_features_1, _ = self.fc_layer(self.rnn_features,
-			[self.rnn_hidden_size, self.cls_feature_dim[0]], 0.01, 'cls_feature_1')
+			[self.rnn_hidden_size, self.cls_feature_dim[0]], 0.1, 'cls_feature_1')
 		self.cls_features_1_relu = tf.nn.relu(tf.nn.dropout(self.cls_features_1, 1 - self.dropout_ratio))
 		
 		self.cls_features_2, _ = self.fc_layer(self.cls_features_1_relu,
-			[self.cls_feature_dim[0], self.cls_feature_dim[1]], 0.01, 'cls_feature_2')
+			[self.cls_feature_dim[0], self.cls_feature_dim[1]], 0.1, 'cls_feature_2')
 		self.cls_features_2_relu = tf.nn.relu(tf.nn.dropout(self.cls_features_2, 1 - self.dropout_ratio))
+
+		self.cls_features_3, _ = self.fc_layer(self.cls_features_2_relu,
+			[self.cls_feature_dim[1], self.cls_feature_dim[2]], 1e-1, 'cls_feature_3')
+		self.cls_features_3_relu = tf.nn.relu(tf.nn.dropout(self.cls_features_3, 1 - self.dropout_ratio))
 		
-		self.cls_level1, rough_vars = self.fc_layer(self.cls_features_2_relu, 
-				[self.cls_feature_dim[1], self.num_classifier], 0.01, 'cls_rough')
-		self.cls_level1_prob = tf.nn.softmax(self.cls_level1)
+		self.cls_features_4, _ = self.fc_layer(self.cls_features_3_relu,
+			[self.cls_feature_dim[2], self.cls_feature_dim[3]], 1e-2, 'cls_feature_4')
+		self.cls_features_4_relu = tf.nn.relu(tf.nn.dropout(self.cls_features_4, 1 - self.dropout_ratio))
+		
+		self.cls_level1, rough_vars = self.fc_layer(self.cls_features_4_relu, 
+				[self.cls_feature_dim[3], self.num_classifier], 0.01, 'cls_rough')
+		self.cls_level1_prob = tf.nn.sigmoid(self.cls_level1)
 
 		#phase 1 share in all phases
-		self.cls_loss_rough = tf.losses.softmax_cross_entropy(self.labels_rough,
-														self.cls_level1,
-														self.labels_rough_factor)
-		self.cls_loss_rough_ = self.softmax_loss(self.cls_level1, self.labels_rough, self.labels_rough_factor)
+		self.cls_loss_rough = self.xentropy_loss(self.cls_level1_prob, self.labels_rough, self.labels_rough_factor)
 		self.wd = tf.add_n(tf.get_collection('all_weight_decay'), name = 'weight_decay_summation')
-		self.loss_level1 = tf.reduce_mean(self.cls_loss_rough) + self.wd
+		self.loss_level1 = self.cls_loss_rough + self.wd
 		self.loss = self.loss_level1
 		self.phase1_varlist = tf.global_variables()
 		self.minimize_rough = self.opt_1.minimize(self.loss_level1)

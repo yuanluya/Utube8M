@@ -15,6 +15,7 @@ class tfReader:
 
 		self.small2big = json.load(open('../Utils/small2big.json'))
 		self.evaluator = EvaluationMetrics(num_features, 1)
+		self.evaluator_rough = EvaluationMetrics(num_classifiers, 1)
 		self.sess = sess
 		self.record_dir = os.path.join(record_dir, mode)
 		self.mode = mode
@@ -95,17 +96,7 @@ class tfReader:
 			for i, data in enumerate(batch_data):
 				labels_fine[i][data['labels']] = 1
 
-			#calculate label_fine_factor
-			denominator_one = np.sum(labels_fine ,axis = 0)
-			denominator_zero = np.ones(self.num_features) * batch_size - denominator_one
-			denominator_one = 1 / denominator_one
-			denominator_zero = 1 / denominator_zero
-			denominator_one[np.argwhere(np.isinf(denominator_one))] = 1
-			denominator_zero[np.argwhere(np.isinf(-denominator_zero))] = 1
-			fine_factor_one = labels_fine * denominator_one
-			fine_factor_zero = labels_fine - 1
-			fine_factor_zero = fine_factor_zero * denominator_zero
-			labels_fine_factor = fine_factor_one - fine_factor_zero
+			labels_fine_factor = self.generate_factor(labels_fine)
 			real_batch_data.update({'labels_rough': labels_rough,
 							   		'labels_rough_factor': labels_rough_factor,
 							   		'labels_fine': labels_fine, 
@@ -116,15 +107,27 @@ class tfReader:
 	
 	def fine2rough(self, batch_data):
 		label_rough = np.zeros([len(batch_data), self.num_classifiers])
-		all_rough_labels = np.zeros(len(batch_data))
 		for b, data in enumerate(batch_data):
 			temp_rough = [self.small2big[str(s)] for s in data['labels']]
-			rough_label = scp.mode(temp_rough)[0][0]
-			all_rough_labels[b] = rough_label
-			label_rough[b, rough_label] = 1
-		label_rough_factor = np.array([self.rough_bias[int(c)] for c in all_rough_labels])
-		count = np.array([1 / np.sum(all_rough_labels == l) for l in all_rough_labels])
-		return label_rough, count# * label_rough_factor
+			label_rough[b, temp_rough] = 1
+		label_rough_factor = self.generate_factor(label_rough)
+		return label_rough, label_rough_factor
+
+	#calculate label factor
+	#normalize positive and negative within each class(column) 
+	#pos_neg_ratio: how much MORE negative samples are weighted
+	def generate_factor(self, labels_fine, pos_neg_ratio = 1):
+		denominator_one = np.sum(labels_fine ,axis = 0)
+		denominator_zero = np.ones(labels_fine.shape[1]) * labels_fine.shape[0] - denominator_one
+		denominator_one = 1 / denominator_one
+		denominator_zero = 1 / denominator_zero
+		denominator_one[np.argwhere(np.isinf(denominator_one))] = 1
+		denominator_zero[np.argwhere(np.isinf(-denominator_zero))] = 1
+		fine_factor_one = labels_fine * denominator_one
+		fine_factor_zero = labels_fine - 1
+		fine_factor_zero = fine_factor_zero * denominator_zero
+		labels_fine_factor = fine_factor_one - pos_neg_ratio * fine_factor_zero
+		return labels_fine_factor
 
 if __name__ == '__main__':
 	main()
