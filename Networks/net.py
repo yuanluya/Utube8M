@@ -93,9 +93,9 @@ class tcNet(Model):
 		self.cls = tf.no_op()
 		if self.phase == 'phase2' or self.phase == 'phase3':
 			self.cls_features_3 = self.fc_layer(self.cls_features_2_relu, [self.cls_feature_dim[1], self.cls_feature_dim[2]], 1e-1, 'cls_feature_3')[0]
-			self.cls_features_3_relu = tf.nn.relu(self.cls_features_3)
+			self.cls_features_3_relu = tf.nn.relu(tf.nn.dropout(self.cls_features_3, 1 - self.dropout_ratio))
 			self.cls_features_4 = self.fc_layer(self.cls_features_3_relu, [self.cls_feature_dim[2], self.cls_feature_dim[3]], 1e-2, 'cls_feature_4')[0]
-			self.cls_features_4_relu = tf.nn.relu(self.cls_features_4)
+			self.cls_features_4_relu = tf.nn.relu(tf.nn.dropout(self.cls_features_4, 1 - self.dropout_ratio))
 			self.cls_final_features = tf.expand_dims(self.cls_features_4_relu, 0)
 			self.classifiers = tf.Variable(tf.random_normal(
 				[self.num_classifier, self.cls_feature_dim[3], self.num_class],
