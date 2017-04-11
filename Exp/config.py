@@ -33,5 +33,5 @@ flags.silent_step = False
 flags.snapshot_iter = 500
 flags.print_iter = 5
 flags.max_iter= 10000
-flags.restore_mode = 'old' #<all|old>
+flags.restore_mode = 'all' #<all|old>
 
