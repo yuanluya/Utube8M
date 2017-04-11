@@ -27,7 +27,7 @@ flags.save_model = 'phase1_brutal'
 
 #training options
 flags.mode = 'train' #<train|val|test>
-flags.init_iter = 0
+flags.init_iter = 1500
 flags.silent_train = False
 flags.silent_step = False
 flags.snapshot_iter = 500
