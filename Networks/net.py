@@ -3,7 +3,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import tensorflow as tf
-import numpy
+import numpy as np
 from base import Model
 import pdb
 
@@ -23,7 +23,7 @@ class tcNet(Model):
 		#[batch_size, num_class]
 		self.labels_rough = tf.placeholder(tf.float32, shape = [None, self.num_classifier])
 		#[batch_size]
-		self.labels_rough_factor = tf.placeholder(tf.float32, shape = [None])
+		self.labels_rough_factor = tf.placeholder(tf.float32)#, shape = [None, self.num_classifier])
 		#[batch_size, num_class]
 		self.labels_fine = tf.placeholder(tf.float32, shape = [None, self.num_class])
 		#[batch_size, num_class]
@@ -33,7 +33,7 @@ class tcNet(Model):
 		self.new_varlist = []
 		self.varlist = []
 		self.optimize_varlist = []
-	
+		self.parameters = np.load('../Exp/weight_bias.npy', encoding = 'latin1').item()
 	#kernel_sizes: [[w, channel, pool:<strides/None>, std]]
 	def build(self, rnn_hidden_size, cnn_kernel_sizes, cls_feature_dim, phase,
 			  lr, weight_decay, dropout_ratio = 0.5, train = True):
@@ -65,29 +65,25 @@ class tcNet(Model):
 			inputs = self.frame_features)
 		#[batch_size, max_frame_size, rnn_hidden_size]
 		self.rnn_features = tf.reduce_mean(tf.maximum(self.bi_features[0], self.bi_features[1]), 1)
-		
+		self.phase1_varlist = tf.global_variables()	
 		#[batch_size, feature_dim]
-		self.cls_features_1, _ = self.fc_layer(self.rnn_features,
-			[self.rnn_hidden_size, self.cls_feature_dim[0]], 0.01, 'cls_feature_1')
+		self.cls_features_1, self.fc_layer1_weights = self.fc_layer(self.rnn_features,
+			[self.rnn_hidden_size, self.cls_feature_dim[0]], 0.1, 'phase1_cls_feature_1')
 		self.cls_features_1_relu = tf.nn.relu(tf.nn.dropout(self.cls_features_1, 1 - self.dropout_ratio))
 		
-		self.cls_features_2, _ = self.fc_layer(self.cls_features_1_relu,
-			[self.cls_feature_dim[0], self.cls_feature_dim[1]], 0.01, 'cls_feature_2')
+		self.cls_features_2, self.fc_layer2_weights = self.fc_layer(self.cls_features_1_relu,
+			[self.cls_feature_dim[0], self.cls_feature_dim[1]], 0.1, 'phase1_cls_feature_2')
 		self.cls_features_2_relu = tf.nn.relu(tf.nn.dropout(self.cls_features_2, 1 - self.dropout_ratio))
 		
-		self.cls_level1, rough_vars = self.fc_layer(self.cls_features_2_relu, 
+		self.cls_level1, self.rough_vars = self.fc_layer(self.cls_features_2_relu, 
 				[self.cls_feature_dim[1], self.num_classifier], 0.01, 'cls_rough')
-		self.cls_level1_prob = tf.nn.softmax(self.cls_level1)
+		self.cls_level1_prob = tf.nn.sigmoid(self.cls_level1)
 
 		#phase 1 share in all phases
-		self.cls_loss_rough = tf.losses.softmax_cross_entropy(self.labels_rough,
-														self.cls_level1,
-														self.labels_rough_factor)
-		self.cls_loss_rough_ = self.softmax_loss(self.cls_level1, self.labels_rough, self.labels_rough_factor)
+		self.cls_loss_rough = self.xentropy_loss(self.cls_level1_prob, self.labels_rough, self.labels_rough_factor)
 		self.wd = tf.add_n(tf.get_collection('all_weight_decay'), name = 'weight_decay_summation')
-		self.loss_level1 = tf.reduce_mean(self.cls_loss_rough) + self.wd
+		self.loss_level1 = self.cls_loss_rough + self.wd
 		self.loss = self.loss_level1
-		self.phase1_varlist = tf.global_variables()
 		self.minimize_rough = self.opt_1.minimize(self.loss_level1)
 		self.minimize = self.minimize_rough 
 		self.cls = tf.no_op()
@@ -144,6 +140,10 @@ class tcNet(Model):
 			init_W = tf.random_normal_initializer(mean = 0.0, stddev = std)
 			init_b = tf.constant_initializer(value = 0.0, dtype = tf.float32)
 
+			#########
+			init_W = tf.constant_initializer(value = self.parameters[name]['weights'][0], dtype = tf.float32)
+			init_b = tf.constant_initializer(value = self.parameters[name]['weights'][1], dtype = tf.float32)
+			#########
 			W = tf.get_variable(name = 'weights', initializer = init_W,
 				shape = shape, dtype = tf.float32)
 			weight_decay = tf.multiply(self.weight_decay, tf.nn.l2_loss(W), name = 'weight_decay')

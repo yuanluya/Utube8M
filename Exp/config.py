@@ -14,8 +14,8 @@ flags.cnn_kernels = [[3, 1024, None, 1e-1],
 					 [3, 256, 2, 1e-2]]
 
 #model hyperparameters
-flags.batch_size = 64 
-flags.learning_rate = [1e-4, 1e-4, 1e-5]
+flags.batch_size = 100 
+flags.learning_rate = [1e-5, 1e-4, 1e-5]
 flags.weight_decay = 1e-5
 flags.rough_bias = np.array([1, 1, 5, 3, 3, 3, 3, 
 							  1, 3, 3, 1, 5, 7, 3, 
@@ -27,11 +27,11 @@ flags.save_model = 'phase1_brutal'
 
 #training options
 flags.mode = 'train' #<train|val|test>
-flags.init_iter = 1500
+flags.init_iter = 19000
 flags.silent_train = False
 flags.silent_step = False
-flags.snapshot_iter = 500
-flags.print_iter = 5
-flags.max_iter= 10000
+flags.snapshot_iter = 1000
+flags.print_iter = 15
+flags.max_iter= 30000
 flags.restore_mode = 'all' #<all|old>
 

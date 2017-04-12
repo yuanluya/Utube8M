@@ -49,8 +49,9 @@ def main():
 		while current_iter < flags.max_iter:
 			t0 = time.clock()
 			if current_iter % flags.print_iter == 0:
-				print('{iter %d}' % (current_iter))
-				print('[#]average seg loss is: %f' % np.mean(avg_loss))
+				result = tfr.evaluator_rough.get()
+				print('[RESULT]{iter %d, map: %f, gap: %f, avg_hit_@_one: %f, avg_perr %f}' %\
+					(current_iter, np.mean(result['aps']), result['gap'], result['avg_hit_at_one'], result['avg_perr']))	
 				avg_loss = []
 			loss = step(sess, net, tfr, flags.batch_size, flags.mode, flags.silent_step)
 			avg_loss.append(loss)
