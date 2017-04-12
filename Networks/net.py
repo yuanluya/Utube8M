@@ -27,7 +27,7 @@ class tcNet(Model):
 		#[batch_size, num_class]
 		self.labels_fine = tf.placeholder(tf.float32, shape = [None, self.num_class])
 		#[batch_size, num_class]
-		self.labels_fine_factor = tf.placeholder(tf.float32, shape = [None, self.num_class])
+		self.labels_fine_factor = tf.placeholder(tf.float32)
 		#[batch_size]
 		self.batch_lengths = tf.placeholder(tf.int32, shape = [None])
 		self.new_varlist = []
@@ -36,7 +36,7 @@ class tcNet(Model):
 	
 	#kernel_sizes: [[w, channel, pool:<strides/None>, std]]
 	def build(self, rnn_hidden_size, cnn_kernel_sizes, cls_feature_dim, phase,
-			  lr, weight_decay, dropout_ratio = 0.5, train = True):
+			  lr, weight_decay, dropout_ratio = 0.4, train = True):
 		#define model hyperparameters
 		self.rnn_hidden_size = rnn_hidden_size
 		self.cnn_kernel_sizes = cnn_kernel_sizes
@@ -85,30 +85,25 @@ class tcNet(Model):
 		#[batch_size, feature_dim]
 		cnn_shapes = self.cnn_layers[-1].get_shape().as_list()
 		self.cnn_output = tf.reshape(self.cnn_layers[-1], [-1, cnn_shapes[1] * cnn_shapes[2] * cnn_shapes[3]])
-		self.cls_features_1, features_1_vars = self.fc_layer(self.cnn_output,
+		
+		#fully connected layers
+		self.cls_features_1, _ = self.fc_layer(self.cnn_output,
 			[self.cnn_output.get_shape().as_list()[-1], self.cls_feature_dim[0]], 0.01, 'cls_feature_1')
 		self.cls_features_1_relu = tf.nn.relu(tf.nn.dropout(self.cls_features_1, 1 - self.dropout_ratio))
-		
-		self.cls_features_2, features_2_vars = self.fc_layer(self.cls_features_1_relu,
+		self.cls_features_2, _ = self.fc_layer(self.cls_features_1_relu,
 			[self.cls_feature_dim[0], self.cls_feature_dim[1]], 0.01, 'cls_feature_2')
 		self.cls_features_2_relu = tf.nn.relu(tf.nn.dropout(self.cls_features_2, 1 - self.dropout_ratio))
-		'''	
-		self.cls_level1, _ = self.fc_layer(self.cls_features_2_relu, 
-				[self.cls_feature_dim[1], self.num_classifier], 0.01, 'cls_rough')
-		self.cls_level1_prob = tf.nn.softmax(self.cls_level1)
-
-		#phase 1 share in all phases
-		self.cls_loss_rough = tf.losses.softmax_cross_entropy(self.labels_rough,
-														self.cls_level1,
-														self.labels_rough_factor)
-		self.minimize_rough = self.opt_1.minimize(self.loss, var_list = features_1_vars + features_2_vars)
-		'''
-		self.cls_features_3 = tf.nn.relu(self.fc_layer(self.cls_features_2_relu, [self.cls_feature_dim[1], self.cls_feature_dim[2]], 1e-1, 'cls_feature_3')[0])
-		self.cls_features_4 = tf.nn.relu(self.fc_layer(self.cls_features_3, [self.cls_feature_dim[2], self.cls_feature_dim[3]], 1e-2, 'cls_feature_4')[0])
-		self.cls_recover, _ = self.fc_layer(self.cls_features_4, [self.cls_feature_dim[3], self.num_class], 1e-2, 'cls_pred')
+		self.cls_features_3, _ = self.fc_layer(self.cls_features_2_relu,
+			[self.cls_feature_dim[1], self.cls_feature_dim[2]], 1e-1, 'cls_feature_3')
+		self.cls_features_3_relu = tf.nn.relu(tf.nn.dropout(self.cls_features_3, 1 - self.dropout_ratio))
+		self.cls_features_4, _ = self.fc_layer(self.cls_features_3_relu,
+			[self.cls_feature_dim[2], self.cls_feature_dim[3]], 1e-2, 'cls_feature_4')
+		self.cls_features_4_relu = tf.nn.relu(tf.nn.dropout(self.cls_features_4, 1 - self.dropout_ratio))
+		
+		#final prediction
+		self.cls_recover, _ = self.fc_layer(self.cls_features_4_relu, [self.cls_feature_dim[3], self.num_class], 1e-2, 'cls_pred')
 		self.cls = tf.nn.sigmoid(self.cls_recover)
 		self.cls_loss = self.calculate_loss(self.cls, self.labels_fine, self.labels_fine_factor)
-		
 		self.wd = tf.add_n(tf.get_collection('all_weight_decay'), name = 'weight_decay_summation')
 		self.loss = self.cls_loss  + self.wd
 		self.minimize = self.opt_1.minimize(self.loss)
