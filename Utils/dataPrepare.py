@@ -28,6 +28,7 @@ class tfReader:
 
 		self.record_names = [os.path.join(self.record_dir, f) for f in os.listdir(self.record_dir) if f[-8: ] == 'tfrecord']
 		shuffle(self.record_names)
+		print('[DATA]Found %d records.' % len(self.record_names))
 		filename_queue = tf.train.string_input_producer(self.record_names)
 		_, serialized_example = self.reader.read(filename_queue)
 
@@ -109,7 +110,7 @@ class tfReader:
 			real_batch_data.update({'labels_rough': labels_rough,
 							   		'labels_rough_factor': labels_rough_factor,
 							   		'labels_fine': labels_fine, 
-							   		'labels_fine_factor': labels_fine_factor
+							   		'labels_fine_factor': 1.0#labels_fine_factor
 							   		})
 			
 		return real_batch_data
@@ -124,7 +125,7 @@ class tfReader:
 			label_rough[b, rough_label] = 1
 		label_rough_factor = np.array([self.rough_bias[int(c)] for c in all_rough_labels])
 		count = np.array([1 / np.sum(all_rough_labels == l) for l in all_rough_labels])
-		return label_rough, label_rough_factor * count
+		return label_rough, count * label_rough_factor
 
 if __name__ == '__main__':
 	main()

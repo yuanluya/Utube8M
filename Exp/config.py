@@ -27,11 +27,15 @@ flags.save_model = 'phase2'
 
 #training options
 flags.mode = 'train' #<train|val|test>
+<<<<<<< HEAD
 flags.init_iter = 24800
+=======
+flags.init_iter = 51000
+>>>>>>> deeplearn
 flags.silent_train = False
 flags.silent_step = False
-flags.snapshot_iter = 500
-flags.print_iter = 5
+flags.snapshot_iter = 1000
+flags.print_iter = 20
 flags.max_iter= 10000
 flags.restore_mode = 'all' #<all|old>
 
