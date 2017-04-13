@@ -144,7 +144,8 @@ class tcNet(Model):
 		self.cls_level2_prob = tf.nn.sigmoid(self.cls_level2)
 		
 		#merge two levels
-		self.cls_level1_prob_expand = tf.expand_dims(tf.transpose(self.cls_level1_prob), -1)
+		self.norm_cls_level1 = tf.div(self.cls_level1_prob, tf.reduce_sum(self.cls_level1_prob))
+		self.cls_level1_prob_expand = tf.expand_dims(tf.transpose(self.norm_cls_level1), -1)
 		self.avg_cls_level2 = tf.multiply(self.cls_level1_prob_expand, self.cls_level2_prob)
 		self.cls = tf.reduce_sum(self.avg_cls_level2, 0)
 		self.cls_loss = self.xentropy_loss(self.cls, self.labels_fine, self.labels_fine_factor)
