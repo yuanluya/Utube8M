@@ -27,7 +27,7 @@ flags.save_model = 'detection'
 
 #training options
 flags.mode = 'train' #<train|val|test>
-flags.init_iter = 51000
+flags.init_iter = 57000
 flags.silent_train = False
 flags.silent_step = False
 flags.snapshot_iter = 1000
