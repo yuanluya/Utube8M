@@ -32,26 +32,43 @@ def main():
 	tf.train.start_queue_runners(sess = sess)
 	
 	if flags.restore_mode == 'all':
-		restore_vars = []
-	elif flags.restore_mode == 'old':
-		restore_vars = net.phase1_varlist 
-	if net.load(sess, '../Checkpoints', 'tcNet_%s_%d' % (flags.init_model, flags.init_iter), restore_vars):
-		print('LOAD SUCESSFULLY')
-	elif flags.mode == 'train':
-		print('[!!!]No Model Found, Train From Scratch')
-	else:
-		print('[!!!]No Model Found, Cannot Test or Validate')
-		return
+		if net.load(sess, '../Checkpoints', 'tcNet_%s_%d' % (flags.init_model, flags.init_iter)):
+			print('LOAD SUCESSFULLY')
+		elif flags.mode == 'train':
+			print('[!!!]No Model Found, Train From Scratch')
+		else:
+			print('[!!!]No Model Found, Cannot Test or Validate')
+			return
+	elif flags.restore_mode == 'seperate':
+		if flags.mode != 'train':
+			print('[!!!]No Model Found, Cannot Test or Validate, '
+				'don\'t recommend train from scratch')
+			return
+		if net.load(sess, '../Checkpoints', 'tcNet_rough_%d' % flags.init_rough_iter):
+			print('LOAD ROUGH SUCESSFULLY')
+		else:
+			print('CANNOT LOAD ROUGH')
+			assert(0)
+		if net.load(sess, '../Checkpoints', 'tcNet_fine_%d' % flags.init_fine_iter):
+			print('LOAD ROUGH SUCESSFULLY')
+		else:
+			print('CANNOT LOAD FINE')
+			assert(0)
+
 
 	if flags.mode == 'train' or flags.mode == 'val':
 		current_iter = 1
 		while current_iter < flags.max_iter:
 			t0 = time.clock()
 			if current_iter % flags.print_iter == 0:
-				result = tfr.evaluator.get()
+				result_fine = tfr.evaluator.get()
+				result_rough = tfr.evaluator_rough.get()
 				print('[RESULT]{iter %d, map: %f, gap: %f, avg_hit_@_one: %f, avg_perr %f}' %\
-					(current_iter, np.sum(result['aps']) / np.sum(result['aps'] > 0),
-					result['gap'], result['avg_hit_at_one'], result['avg_perr']))
+					(current_iter, np.sum(result_rough['aps']) / np.sum(result_rough['aps'] > 0),
+					result_rough['gap'], result_rough['avg_hit_at_one'], result_rough['avg_perr']))
+				print('{FINE, map: %f, gap: %f, avg_hit_@_one: %f, avg_perr %f}' %\
+					(np.sum(result_fine['aps']) / np.sum(result_fine['aps'] > 0),
+					result_fine['gap'], result_fine['avg_hit_at_one'], result_fine['avg_perr']))
 			step(sess, net, tfr, flags.batch_size, flags.mode, flags.silent_step)
 
 			current_iter += 1

@@ -14,48 +14,22 @@ flags.cnn_kernels = [[3, 1024, None, 1e-1],
 					 [3, 256, 2, 1e-2]]
 
 #model hyperparameters
-<<<<<<< HEAD
-flags.batch_size = 100
-flags.learning_rate = [1e-5, 1e-5, 1e-5]
-=======
 flags.batch_size = 100 
 flags.learning_rate = [1e-5, 1e-4, 1e-5]
->>>>>>> brutal
 flags.weight_decay = 1e-5
 flags.rough_bias = np.array([1, 1, 5, 3, 3, 3, 3, 
 							  1, 3, 3, 1, 5, 7, 3, 
 					 		  5, 10, 5, 3, 1, 3,
 					 		  3, 5, 1, 3, 3])
-<<<<<<< HEAD
-flags.training_phase = 'phase2' #<phase1|phase2|phasae3>
-flags.init_model = 'phase2'
-flags.save_model = 'phase2'
 
 #training options
 flags.mode = 'train' #<train|val|test>
-<<<<<<< HEAD
-flags.init_iter = 24800
-=======
-flags.init_iter = 51000
->>>>>>> deeplearn
+flags.init_rough_iter = 24800
+flags.init_fine_iter = 24800
 flags.silent_train = False
 flags.silent_step = False
 flags.snapshot_iter = 1000
 flags.print_iter = 20
-flags.max_iter= 10000
-=======
-flags.training_phase = 'phase1' #<phase1|phase2|phasae3>
-flags.init_model = 'phase1_brutal'
-flags.save_model = 'phase1_brutal'
-
-#training options
-flags.mode = 'train' #<train|val|test>
-flags.init_iter = 19000
-flags.silent_train = False
-flags.silent_step = False
-flags.snapshot_iter = 1000
-flags.print_iter = 15
-flags.max_iter= 30000
->>>>>>> brutal
-flags.restore_mode = 'all' #<all|old>
+flags.max_iter = 10000
+flags.restore_mode = 'all' #<all|seperate>
 
