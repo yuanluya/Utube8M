@@ -14,8 +14,8 @@ def step(sess, net, tfr, batch_size, mode, silent_step):
 	data = tfr.fetch(batch_size)
 	loss = None
 	if mode == 'train':
-		[_, loss, cls] = \
-			sess.run([net.minimize, net.loss, net.cls],
+		[_, loss, cls, weights, bias] = \
+			sess.run([net.minimize, net.loss, net.cls, net.final_vars[0], net.final_vars[1]],
 			feed_dict = {net.frame_features: data['pad_feature'],
 						 net.labels_fine: data['labels_fine'],
 						 net.labels_rough: data['labels_rough'],
@@ -34,7 +34,7 @@ def step(sess, net, tfr, batch_size, mode, silent_step):
 		[cls] = sess.run([net.cls],
 			feed_dict = {net.frame_features: data['pad_feature'],
 						 net.batch_lengths: data['original_len']})
-
+	pdb.set_trace()
 	if not silent_step and mode != 'test':
 		'''
 		gt_labels = np.nonzero(data['labels_rough'])[1]

@@ -22,7 +22,7 @@ flags.rough_bias = np.array([1, 1, 5, 3, 3, 3, 3,
 					 		  5, 10, 5, 3, 1, 3,
 					 		  3, 5, 1, 3, 3])
 flags.training_phase = 'phase2' #<phase1|phase2|phasae3>
-flags.init_model = 'detection'
+flags.init_model = 'fine'
 flags.save_model = 'detection'
 
 #training options

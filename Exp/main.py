@@ -51,7 +51,7 @@ def main():
 			if current_iter % flags.print_iter == 0:
 				result = tfr.evaluator.get()
 				print('[RESULT]{iter %d, map: %f, gap: %f, avg_hit_@_one: %f, avg_perr %f}' %\
-					(current_iter, np.sum(result['aps']) / np.sum(result['aps'] > 0),
+					(current_iter, np.sum(result['aps']) / np.sum(np.array(result['aps']) > 0),
 					result['gap'], result['avg_hit_at_one'], result['avg_perr']))
 				avg_loss = []
 			loss = step(sess, net, tfr, flags.batch_size, flags.mode, flags.silent_step)

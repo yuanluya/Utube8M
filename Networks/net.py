@@ -101,7 +101,7 @@ class tcNet(Model):
 		self.cls_features_4_relu = tf.nn.relu(tf.nn.dropout(self.cls_features_4, 1 - self.dropout_ratio))
 		
 		#final prediction
-		self.cls_recover, _ = self.fc_layer(self.cls_features_4_relu, [self.cls_feature_dim[3], self.num_class], 1e-2, 'cls_pred')
+		self.cls_recover, self.final_vars = self.fc_layer(self.cls_features_4_relu, [self.cls_feature_dim[3], self.num_class], 1e-2, 'cls_pred')
 		self.cls = tf.nn.sigmoid(self.cls_recover)
 		self.cls_loss = self.calculate_loss(self.cls, self.labels_fine, self.labels_fine_factor)
 		self.wd = tf.add_n(tf.get_collection('all_weight_decay'), name = 'weight_decay_summation')
