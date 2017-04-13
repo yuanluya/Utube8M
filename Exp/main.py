@@ -45,7 +45,6 @@ def main():
 
 	if flags.mode == 'train' or flags.mode == 'val':
 		current_iter = 1
-		avg_loss = []
 		while current_iter < flags.max_iter:
 			t0 = time.clock()
 			if current_iter % flags.print_iter == 0:
@@ -53,9 +52,7 @@ def main():
 				print('[RESULT]{iter %d, map: %f, gap: %f, avg_hit_@_one: %f, avg_perr %f}' %\
 					(current_iter, np.sum(result['aps']) / np.sum(result['aps'] > 0),
 					result['gap'], result['avg_hit_at_one'], result['avg_perr']))
-				avg_loss = []
-			loss = step(sess, net, tfr, flags.batch_size, flags.mode, flags.silent_step)
-			avg_loss.append(loss)
+			step(sess, net, tfr, flags.batch_size, flags.mode, flags.silent_step)
 
 			current_iter += 1
 			if current_iter % flags.snapshot_iter == 0:
