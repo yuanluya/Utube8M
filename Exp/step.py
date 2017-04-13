@@ -35,6 +35,7 @@ def step(sess, net, tfr, batch_size, mode, silent_step):
 		[cls] = sess.run([net.cls],
 			feed_dict = {net.frame_features: data['pad_feature'],
 						 net.batch_lengths: data['original_len']})
+	pdb.set_trace()
 	if not silent_step and mode != 'test':
 		print('[ROUGH]', tfr.evaluator_rough.accumulate(cls_level1_prob, data['labels_rough'], loss_rough))
 		print('[FINE] ', tfr.evaluator.accumulate(cls, data['labels_fine'], loss_fine), '\n')

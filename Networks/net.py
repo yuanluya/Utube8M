@@ -30,6 +30,7 @@ class tcNet(Model):
 		self.labels_fine_factor = tf.placeholder(tf.float32)
 		#[batch_size]
 		self.batch_lengths = tf.placeholder(tf.int32, shape = [None])
+		self.data_dict = np.load('../Networks/final_model.npy', encoding='latin1').item() 
 		self.variable_patches = {}
 
 	#kernel_sizes: [[w, channel, pool:<strides/None>, std]]
@@ -130,21 +131,22 @@ class tcNet(Model):
 		#############################
 		#####        MOE        #####
 		#############################
-		self.classifiers = tf.Variable(tf.random_normal(
-			[self.num_classifier, self.cls_feature_dim[3], self.num_class],
-			stddev = 1e-2, name = 'fine_classifiers_2'))
-		self.variable_patches['MOE'] = [self.classifiers]
+		self.classifiers = tf.Variable(np.tile(self.data_dict['weights'],
+			(self.num_classifier, 1, 1)), name = 'fine_classifiers_weights')
+		self.classifiers_bias = tf.Variable(np.tile(self.data_dict['bias'],
+			(self.num_classifier, 1, 1)), name = 'fine_classifiers_bias')
+		self.variable_patches['MOE'] = [self.classifiers, self.classifiers_bias]
 		#add weight decay for this classifier variable
 		classifier_wd = tf.multiply(self.weight_decay,
 			tf.nn.l2_loss(self.classifiers), name = 'classifier_weight_decay')
 		tf.add_to_collection('all_weight_decay', classifier_wd)
 		self.pre_copy = tf.expand_dims(self.cls_features_4_relu, 0)
 		self.cls_features_copy = tf.tile(self.pre_copy, [self.num_classifier, 1, 1])
-		self.cls_level2 = tf.matmul(self.cls_features_copy, self.classifiers)
+		self.cls_level2 = tf.matmul(self.cls_features_copy, self.classifiers) + self.classifiers_bias
 		self.cls_level2_prob = tf.nn.sigmoid(self.cls_level2)
 		
 		#merge two levels
-		self.norm_cls_level1 = tf.div(self.cls_level1_prob, tf.reduce_sum(self.cls_level1_prob))
+		self.norm_cls_level1 = tf.div(self.cls_level1_prob, tf.expand_dims(tf.reduce_sum(self.cls_level1_prob, 1), -1))
 		self.cls_level1_prob_expand = tf.expand_dims(tf.transpose(self.norm_cls_level1), -1)
 		self.avg_cls_level2 = tf.multiply(self.cls_level1_prob_expand, self.cls_level2_prob)
 		self.cls = tf.reduce_sum(self.avg_cls_level2, 0)

@@ -32,7 +32,8 @@ def main():
 	tf.train.start_queue_runners(sess = sess)
 	
 	if flags.restore_mode == 'all':
-		if net.load(sess, '../Checkpoints', 'tcNet_%s_%d' % (flags.init_model, flags.init_iter), []):
+		if net.load(sess, '../Checkpoints', 'tcNet_%s_%d' % (flags.init_model, flags.init_iter),
+			net.variable_patches['rough_vars'] + net.variable_patches['fine_vars']):
 			print('LOAD SUCESSFULLY')
 		elif flags.mode == 'train':
 			print('[!!!]No Model Found, Train From Scratch')
