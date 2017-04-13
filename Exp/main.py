@@ -23,8 +23,8 @@ def main():
 	net = tcNet(sess)
 	with tf.device('/%s: %d' % (device, device_idx)): 
 		net.build(flags.rnn_hidden_size, flags.cnn_kernels,
-				  flags.cls_feature_dim, flags.training_phase, 
-				  flags.learning_rate, flags.weight_decay, train = (flags.mode == 'train'))
+				  flags.cls_feature_dim, flags.learning_rate,
+				  flags.weight_decay, train = (flags.mode == 'train'))
 		
 	tfr = tfReader(sess, flags.data_dir, flags.mode, flags.rough_bias)
 	init = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer()) 
@@ -32,7 +32,7 @@ def main():
 	tf.train.start_queue_runners(sess = sess)
 	
 	if flags.restore_mode == 'all':
-		if net.load(sess, '../Checkpoints', 'tcNet_%s_%d' % (flags.init_model, flags.init_iter)):
+		if net.load(sess, '../Checkpoints', 'tcNet_%s_%d' % (flags.init_model, flags.init_iter), []):
 			print('LOAD SUCESSFULLY')
 		elif flags.mode == 'train':
 			print('[!!!]No Model Found, Train From Scratch')
@@ -44,12 +44,12 @@ def main():
 			print('[!!!]No Model Found, Cannot Test or Validate, '
 				'don\'t recommend train from scratch')
 			return
-		if net.load(sess, '../Checkpoints', 'tcNet_rough_%d' % flags.init_rough_iter):
+		if net.load(sess, '../Checkpoints', 'tcNet_rough_%d' % flags.init_rough_iter, net.variable_patches['rough_vars']):
 			print('LOAD ROUGH SUCESSFULLY')
 		else:
 			print('CANNOT LOAD ROUGH')
 			assert(0)
-		if net.load(sess, '../Checkpoints', 'tcNet_fine_%d' % flags.init_fine_iter):
+		if net.load(sess, '../Checkpoints', 'tcNet_fine_%d' % flags.init_fine_iter, net.variable_patches['fine_vars']):
 			print('LOAD ROUGH SUCESSFULLY')
 		else:
 			print('CANNOT LOAD FINE')
@@ -64,10 +64,10 @@ def main():
 				result_fine = tfr.evaluator.get()
 				result_rough = tfr.evaluator_rough.get()
 				print('[RESULT]{iter %d, map: %f, gap: %f, avg_hit_@_one: %f, avg_perr %f}' %\
-					(current_iter, np.sum(result_rough['aps']) / np.sum(result_rough['aps'] > 0),
+					(current_iter, np.sum(result_rough['aps']) / np.sum(np.array(result_rough['aps']) > 0),
 					result_rough['gap'], result_rough['avg_hit_at_one'], result_rough['avg_perr']))
-				print('{FINE, map: %f, gap: %f, avg_hit_@_one: %f, avg_perr %f}' %\
-					(np.sum(result_fine['aps']) / np.sum(result_fine['aps'] > 0),
+				print('{FINE, map: %f, gap: %f, avg_hit_@_one: %f, avg_perr %f}\n' %\
+					(np.sum(result_fine['aps']) / np.sum(np.array(result_fine['aps']) > 0),
 					result_fine['gap'], result_fine['avg_hit_at_one'], result_fine['avg_perr']))
 			step(sess, net, tfr, flags.batch_size, flags.mode, flags.silent_step)
 
