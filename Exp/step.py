@@ -10,7 +10,7 @@ sys.path.append('../Utils')
 from net import tcNet
 from dataPrepare import tfReader
 
-def step(sess, net, tfr, batch_size, mode, silent_step):
+def step(sess, net, tfr, batch_size, mode, silent_step, result_saver):
 	data = tfr.fetch(batch_size)
 	loss = None
 	if mode == 'train':
@@ -35,10 +35,24 @@ def step(sess, net, tfr, batch_size, mode, silent_step):
 		[cls] = sess.run([net.cls],
 			feed_dict = {net.frame_features: data['pad_feature'],
 						 net.batch_lengths: data['original_len']})
-	pdb.set_trace()
+	rough_result = tfr.evaluator_rough.accumulate(cls_level1_prob, data['labels_rough'], loss_rough)
+	fine_result = tfr.evaluator.accumulate(cls, data['labels_fine'], loss_fine)
+	find_result(result_saver, cls, data['labels_fine'], data['video_ids'])
 	if not silent_step and mode != 'test':
-		print('[ROUGH]', tfr.evaluator_rough.accumulate(cls_level1_prob, data['labels_rough'], loss_rough))
-		print('[FINE] ', tfr.evaluator.accumulate(cls, data['labels_fine'], loss_fine), '\n')
+		print('[ROUGH]', rough_result)
+		print('[FINE] ', fine_result, '\n')
+
+#result saver with field: good|bad
+def find_result(result_saver, pred_probs, labels, v_ids):
+	cls_pred = np.argsort(pred_probs, axis = 1)
+	for i in range(pred_probs.shape[0]):
+		gt_labels = np.nonzero(labels[i, :])
+		num_labels = gt_labels.shape[0]
+		top_k = cls_pred[i, 0: num_labels].sort()
+		if np.sum(gt_labels == top_k) == num_labels:
+			result_saver['good'].append(v_ids[i])
+		elif np.sum(gt_labels == top_k) == 0:
+			result_saver['bad'].append(v_ids[i])
 
 if __name__ == '__main__':
 	main()

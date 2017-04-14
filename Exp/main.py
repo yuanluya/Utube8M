@@ -31,6 +31,7 @@ def main():
 	sess.run(init)
 	tf.train.start_queue_runners(sess = sess)
 	
+	global_result_saver = {'good': [], 'bad': []}
 	if flags.restore_mode == 'all':
 		if net.load(sess, '../Checkpoints', 'tcNet_%s_%d' % (flags.init_model, flags.init_iter),
 			net.variable_patches['rough_vars'] + net.variable_patches['fine_vars']):
@@ -70,7 +71,7 @@ def main():
 				print('{FINE, map: %f, gap: %f, avg_hit_@_one: %f, avg_perr %f}\n' %\
 					(np.sum(result_fine['aps']) / np.sum(np.array(result_fine['aps']) > 0),
 					result_fine['gap'], result_fine['avg_hit_at_one'], result_fine['avg_perr']))
-			step(sess, net, tfr, flags.batch_size, flags.mode, flags.silent_step)
+			step(sess, net, tfr, flags.batch_size, flags.mode, flags.silent_step, global_result_saver)
 
 			current_iter += 1
 			if current_iter % flags.snapshot_iter == 0:
