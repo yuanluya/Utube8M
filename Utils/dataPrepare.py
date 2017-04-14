@@ -27,7 +27,11 @@ class tfReader:
 		self.feature_vec_len = feature_vec_len
 		self.pad_batch_max = pad_batch_max
 
-		self.record_names = [os.path.join(self.record_dir, f) for f in os.listdir(self.record_dir) if f[-8: ] == 'tfrecord']
+		self.record_names_all = [os.path.join(self.record_dir, f) for f in os.listdir(self.record_dir) if f[-8: ] == 'tfrecord']
+		old_names = open('../Data/old_name.txt', 'r')
+		self.record_names_old = old_names.readlines()
+		self.record_names_old = [os.path.join(self.record_dir, name[0: -1]) for name in self.record_names_old if len(name) > 0]
+		self.record_names = list(set(self.record_names_all) - set(self.record_names_old))
 		shuffle(self.record_names)
 		print('[DATA]Found %d records.' % len(self.record_names))
 		filename_queue = tf.train.string_input_producer(self.record_names)

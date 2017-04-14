@@ -74,8 +74,10 @@ def main():
 			step(sess, net, tfr, flags.batch_size, flags.mode, flags.silent_step, global_result_saver)
 
 			current_iter += 1
-			if current_iter % flags.snapshot_iter == 0:
+			if flags.mode == 'train' and current_iter % flags.snapshot_iter == 0:
 				net.save(sess, '../Checkpoints', 'tcNet_%s_%d' % (flags.save_model, flags.init_iter + current_iter))
+
+	print(global_result_saver)
 
 if __name__ == '__main__':
 	main()

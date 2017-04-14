@@ -46,7 +46,7 @@ def step(sess, net, tfr, batch_size, mode, silent_step, result_saver):
 def find_result(result_saver, pred_probs, labels, v_ids):
 	cls_pred = np.argsort(pred_probs, axis = 1)
 	for i in range(pred_probs.shape[0]):
-		gt_labels = np.nonzero(labels[i, :])
+		gt_labels = np.nonzero(labels[i, :])[0]
 		num_labels = gt_labels.shape[0]
 		top_k = cls_pred[i, 0: num_labels].sort()
 		if np.sum(gt_labels == top_k) == num_labels:

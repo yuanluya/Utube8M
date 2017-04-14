@@ -155,10 +155,10 @@ class tcNet(Model):
 		self.fine_wds = list(set(tf.get_collection('all_weight_decay')) - set(self.rough_wds))
 		self.fine_wd = tf.add_n(self.fine_wds, name = 'weight_decay_summation')
 		self.loss_fine = self.fine_wd + self.cls_loss 
-		self.minimize_fine = self.opt_2.minimize(self.loss_fine, var_list = list(set(self.variable_patches['fine_vars']) - set(self.variable_patches['rnn'])))
-		self.minimize_moe = self.opt_3.minimize(self.loss_fine, var_list = self.variable_patches['MOE'])
-		self.minimize = tf.group(self.minimize_fine, self.minimize_moe)
-		#self.minimize = self.opt_1.minimize(self.loss_fine + self.loss_rough)
+		#self.minimize_fine = self.opt_2.minimize(self.loss_fine, var_list = list(set(self.variable_patches['fine_vars']) - set(self.variable_patches['rnn'])))
+		#self.minimize_moe = self.opt_3.minimize(self.loss_fine, var_list = self.variable_patches['MOE'])
+		#self.minimize = tf.group(self.minimize_fine, self.minimize_moe)
+		self.minimize = self.opt_1.minimize(self.loss_fine + self.loss_rough)
 	def conv_layer(self, input, kernel_size, std, name):
 		with tf.variable_scope(name):
 			init_filt = tf.random_normal_initializer(mean = 0.0, stddev = std)

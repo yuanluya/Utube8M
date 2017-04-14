@@ -3,7 +3,7 @@ from easydict import EasyDict as edict
 import os
 
 flags = edict()
-flags.data_dir = '../Data'
+flags.data_dir = '/scratch/eecs542w17_fluxg/haohuanw/frame_features/'
 
 #model structures
 flags.rnn_hidden_size = 1024 
@@ -28,11 +28,11 @@ flags.init_rough_iter = 22000   #used in seperate mode
 flags.init_fine_iter = 57000	#used in seperate mode
 flags.init_model = 'combine' 	#used in all mode
 flags.save_model = 'combine' 
-flags.init_iter = 17900			#used in all mode
+flags.init_iter = 18200			#used in all mode
 flags.silent_train = False
 flags.silent_step = True
-flags.snapshot_iter = 300
+flags.snapshot_iter = 2000
 flags.print_iter = 10
-flags.max_iter = 10000
+flags.max_iter = 50000
 flags.restore_mode = 'all' #<all|seperate>
 
