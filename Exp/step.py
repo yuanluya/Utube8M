@@ -14,8 +14,11 @@ def step(sess, net, tfr, batch_size, mode, silent_step):
 	data = tfr.fetch(batch_size)
 	loss = None
 	if mode == 'train':
-		[_, loss, cls_level1_prob, cls_level1, cls] = \
-			sess.run([net.minimize, net.loss, net.cls_level1_prob, net.cls_level1, net.cls],
+		[_, loss, cls_level1_prob, cls_level1, cls, fc_layer1_weights, fc_layer2_weights, 
+			rough_vars, cls_features_1, cls_features_2] = \
+			sess.run([net.minimize, net.loss, net.cls_level1_prob, net.cls_level1, net.cls, 
+				net.fc_layer1_weights, net.fc_layer2_weights, net.rough_vars, 
+				net.cls_features_1, net.cls_features_2],
 			feed_dict = {net.frame_features: data['pad_feature'],
 						 net.labels_fine: data['labels_fine'],
 						 net.labels_rough: data['labels_rough'],
@@ -34,7 +37,6 @@ def step(sess, net, tfr, batch_size, mode, silent_step):
 		[cls] = sess.run([net.cls],
 			feed_dict = {net.frame_features: data['pad_feature'],
 						 net.batch_lengths: data['original_len']})
-
 	if not silent_step and mode != 'test':
 		print('[1]', tfr.evaluator_rough.accumulate(cls_level1_prob, data['labels_rough'], loss))
 		if net.phase != 'phase1':

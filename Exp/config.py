@@ -14,8 +14,8 @@ flags.cnn_kernels = [[3, 1024, None, 1e-1],
 					 [3, 256, 2, 1e-2]]
 
 #model hyperparameters
-flags.batch_size = 256
-flags.learning_rate = [1e-4, 1e-4, 1e-5]
+flags.batch_size = 100 
+flags.learning_rate = [1e-5, 1e-4, 1e-5]
 flags.weight_decay = 1e-5
 flags.rough_bias = np.array([1, 1, 5, 3, 3, 3, 3, 
 							  1, 3, 3, 1, 5, 7, 3, 
