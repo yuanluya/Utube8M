@@ -34,7 +34,7 @@ def main():
 	if flags.restore_mode == 'all':
 		restore_vars = []
 	elif flags.restore_mode == 'old':
-		restore_vars = net.phase1_varlist 
+		restore_vars = net.varlist 
 	if net.load(sess, '../Checkpoints', 'tcNet_%s_%d' % (flags.init_model, flags.init_iter), restore_vars):
 		print('LOAD SUCESSFULLY')
 	elif flags.mode == 'train':
@@ -50,7 +50,9 @@ def main():
 			t0 = time.clock()
 			if current_iter % flags.print_iter == 0:
 				print('{iter %d}' % (current_iter))
-				print('[#]average seg loss is: %f' % np.mean(avg_loss))
+				result = tfr.evaluator_rough.get()
+				print('[RESULT]{iter %d, gap: %f, avg_hit_@_one: %f, avg_perr %f}' %\
+					(current_iter, result['gap'], result['avg_hit_at_one'], result['avg_perr']))
 				avg_loss = []
 			loss = step(sess, net, tfr, flags.batch_size, flags.mode, flags.silent_step)
 			avg_loss.append(loss)

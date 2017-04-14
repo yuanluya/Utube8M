@@ -110,8 +110,8 @@ class tfReader:
 		for b, data in enumerate(batch_data):
 			temp_rough = [self.small2big[str(s)] for s in data['labels']]
 			label_rough[b, temp_rough] = 1
-		label_rough_factor = self.generate_factor(label_rough)
-		return label_rough, label_rough_factor
+		label_rough_factor = self.generate_factor(label_rough, 3)
+		return label_rough, 1.0# * label_rough_factor
 
 	#calculate label factor
 	#normalize positive and negative within each class(column) 

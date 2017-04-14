@@ -23,7 +23,7 @@ class tcNet(Model):
 		#[batch_size, num_class]
 		self.labels_rough = tf.placeholder(tf.float32, shape = [None, self.num_classifier])
 		#[batch_size]
-		self.labels_rough_factor = tf.placeholder(tf.float32, shape = [None, self.num_classifier])
+		self.labels_rough_factor = tf.placeholder(tf.float32)#, shape = [None, self.num_classifier])
 		#[batch_size, num_class]
 		self.labels_fine = tf.placeholder(tf.float32, shape = [None, self.num_class])
 		#[batch_size, num_class]
@@ -65,26 +65,22 @@ class tcNet(Model):
 			inputs = self.frame_features)
 		#[batch_size, max_frame_size, rnn_hidden_size]
 		self.rnn_features = tf.reduce_mean(tf.maximum(self.bi_features[0], self.bi_features[1]), 1)
-		
+		self.varlist = tf.global_variables()	
 		#[batch_size, feature_dim]
-		self.cls_features_1, _ = self.fc_layer(self.rnn_features,
-			[self.rnn_hidden_size, self.cls_feature_dim[0]], 0.1, 'cls_feature_1')
+		self.cls_features_1, fc1_vars = self.fc_layer(self.rnn_features,
+			[self.rnn_hidden_size, self.cls_feature_dim[0]], 0.1, 'phase1_cls_feature_1')
 		self.cls_features_1_relu = tf.nn.relu(tf.nn.dropout(self.cls_features_1, 1 - self.dropout_ratio))
 		
-		self.cls_features_2, _ = self.fc_layer(self.cls_features_1_relu,
-			[self.cls_feature_dim[0], self.cls_feature_dim[1]], 0.1, 'cls_feature_2')
+		self.cls_features_2, fc2_vars = self.fc_layer(self.cls_features_1_relu,
+			[self.cls_feature_dim[0], self.cls_feature_dim[1]], 0.1, 'phase1_cls_feature_2')
 		self.cls_features_2_relu = tf.nn.relu(tf.nn.dropout(self.cls_features_2, 1 - self.dropout_ratio))
 
-		self.cls_features_3, _ = self.fc_layer(self.cls_features_2_relu,
-			[self.cls_feature_dim[1], self.cls_feature_dim[2]], 1e-1, 'cls_feature_3')
+		self.cls_features_3, fc3_vars = self.fc_layer(self.cls_features_2_relu,
+			[self.cls_feature_dim[1], self.cls_feature_dim[2]], 1e-1, 'phase1_cls_feature_3')
 		self.cls_features_3_relu = tf.nn.relu(tf.nn.dropout(self.cls_features_3, 1 - self.dropout_ratio))
 		
-		self.cls_features_4, _ = self.fc_layer(self.cls_features_3_relu,
-			[self.cls_feature_dim[2], self.cls_feature_dim[3]], 1e-2, 'cls_feature_4')
-		self.cls_features_4_relu = tf.nn.relu(tf.nn.dropout(self.cls_features_4, 1 - self.dropout_ratio))
-		
-		self.cls_level1, rough_vars = self.fc_layer(self.cls_features_4_relu, 
-				[self.cls_feature_dim[3], self.num_classifier], 0.01, 'cls_rough')
+		self.cls_level1, rough_vars = self.fc_layer(self.cls_features_3_relu, 
+				[self.cls_feature_dim[2], self.num_classifier], 0.01, 'cls_rough')
 		self.cls_level1_prob = tf.nn.sigmoid(self.cls_level1)
 
 		#phase 1 share in all phases
@@ -93,7 +89,7 @@ class tcNet(Model):
 		self.loss_level1 = self.cls_loss_rough + self.wd
 		self.loss = self.loss_level1
 		self.phase1_varlist = tf.global_variables()
-		self.minimize_rough = self.opt_1.minimize(self.loss_level1)
+		self.minimize_rough = self.opt_1.minimize(self.loss_level1, var_list = fc1_vars + fc2_vars + fc3_vars + rough_vars)
 		self.minimize = self.minimize_rough 
 		self.cls = tf.no_op()
 		if self.phase == 'phase2' or self.phase == 'phase3':
